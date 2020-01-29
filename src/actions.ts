@@ -12,27 +12,10 @@ export enum PlayPauseToggle {
 }
 
 export enum ActionId {
-  PlayPause = 'play_pause'
-  // MicVolume = 'mic_volume',
-  // MicVolumeDelta = 'mic_volume_delta',
-  // MicMuted = 'mic_muted',
-  // MicMutedToggle = 'mic_muted_toggle',
-  // SpeakerVolume = 'speaker_volume',
-  // SpeakerVolumeDelta = 'speaker_volume_delta',
-  // SpeakerMuted = 'speaker_muted',
-  // SpeakerMutedToggle = 'speaker_muted_toggle'
+  PlayPause = 'play_pause',
+  NextTrack = 'next_track',
+  PreviousTrack = 'previous_track'
 }
-
-// export function VolumeDeltaPicker(): CompanionInputFieldNumber {
-//   return {
-//     type: 'number',
-//     label: 'Delta',
-//     id: 'delta',
-//     default: 1,
-//     max: 100,
-//     min: -100
-//   }
-// }
 
 export function GetActionsList(devices: SonosDevice[]) {
   const actions: CompanionActions = {}
@@ -43,7 +26,7 @@ export function GetActionsList(devices: SonosDevice[]) {
       DevicePicker(devices),
       {
         type: 'dropdown',
-        label: 'Device',
+        label: 'Mode',
         id: 'mode',
         default: PlayPauseToggle.Toggle,
         choices: [
@@ -53,6 +36,14 @@ export function GetActionsList(devices: SonosDevice[]) {
         ]
       }
     ]
+  }
+  actions[ActionId.NextTrack] = {
+    label: 'Next Track',
+    options: [DevicePicker(devices)]
+  }
+  actions[ActionId.PreviousTrack] = {
+    label: 'Previous Track',
+    options: [DevicePicker(devices)]
   }
 
   return actions
@@ -80,7 +71,7 @@ export function HandleAction(
   try {
     const actionId = action.action as ActionId
     switch (actionId) {
-      case ActionId.PlayPause:
+      case ActionId.PlayPause: {
         const device = getDevice()
         if (device) {
           switch (opt.mode) {
@@ -96,6 +87,21 @@ export function HandleAction(
           }
         }
         break
+      }
+      case ActionId.NextTrack: {
+        const device = getDevice()
+        if (device) {
+          device.Next().catch(e => instance.log(`Sonos: NextTrack failed: ${e}`))
+        }
+        break
+      }
+      case ActionId.PreviousTrack: {
+        const device = getDevice()
+        if (device) {
+          device.Previous().catch(e => instance.log(`Sonos: PreviousTrack failed: ${e}`))
+        }
+        break
+      }
       default:
         assertUnreachable(actionId)
         instance.debug('Unknown action: ' + action.action)
