@@ -4,12 +4,12 @@
 	"api_version": "1.0.0",
 	"description": "Sonos",
 	"keywords": [
-		"Custom"
+		"Audio", "Media"
 	],
-	"manufacturer": "Custom",
+	"manufacturer": "Sonos",
 	"product": "Sonos",
 	"shortname": "sonos",
-	"homepage": "https://git.julusian.co.uk/companion/sonos#readme",
+	"homepage": "https://github.com/bitfocus/companion-module-sonos#readme",
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "trash dist && yarn build:main",
