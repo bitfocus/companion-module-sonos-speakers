@@ -7,14 +7,15 @@ import {
   CompanionFeedbacks,
   CompanionInputFieldColor
 } from '../../../instance_skel_types'
-import { DevicePicker } from './choices'
+import { DevicePicker, VolumePicker } from './choices'
 import { DeviceConfig } from './config'
 import { assertUnreachable } from './util'
 
 export enum FeedbackId {
   Playing = 'playing',
   Paused = 'paused',
-  Stopped = 'stopped'
+  Stopped = 'stopped',
+  Volume = 'volume'
 }
 
 export function ForegroundPicker(color: number): CompanionInputFieldColor {
@@ -60,6 +61,16 @@ export function GetFeedbacksList(instance: InstanceSkel<DeviceConfig>, devices: 
       DevicePicker(devices)
     ]
   }
+  feedbacks[FeedbackId.Volume] = {
+    label: 'Change colors from device volume',
+    description: 'If the device is volume matches, change colors of the bank',
+    options: [
+      ForegroundPicker(instance.rgb(255, 255, 255)),
+      BackgroundPicker(instance.rgb(255, 0, 0)),
+      DevicePicker(devices),
+      VolumePicker()
+    ]
+  }
 
   return feedbacks
 }
@@ -96,6 +107,14 @@ export function ExecuteFeedback(
     case FeedbackId.Stopped: {
       const device = getDevice()
       if (device?.CurrentTransportState === TransportState.Stopped) {
+        return getOptColors()
+      }
+      break
+    }
+    case FeedbackId.Volume: {
+      const device = getDevice()
+      console.log(device?.Volume, opt.volume)
+      if (device?.Volume === Number(opt.volume)) {
         return getOptColors()
       }
       break

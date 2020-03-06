@@ -1,5 +1,5 @@
 import { SonosDevice } from '@svrooij/sonos'
-import { CompanionInputFieldDropdown } from '../../../instance_skel_types'
+import { CompanionInputFieldDropdown, CompanionInputFieldNumber } from '../../../instance_skel_types'
 
 export function DevicePicker(devices: SonosDevice[]): CompanionInputFieldDropdown {
   const choices = devices.map(d => ({
@@ -13,5 +13,16 @@ export function DevicePicker(devices: SonosDevice[]): CompanionInputFieldDropdow
     id: 'device',
     default: choices.length ? choices[0].id : '',
     choices
+  }
+}
+
+export function VolumePicker(): CompanionInputFieldNumber {
+  return {
+    type: 'number',
+    label: 'Volume',
+    id: 'volume',
+    default: 50,
+    max: 100,
+    min: 0
   }
 }

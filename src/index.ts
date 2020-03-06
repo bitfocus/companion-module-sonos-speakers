@@ -38,13 +38,6 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
   public init() {
     this.status(this.STATUS_UNKNOWN)
     this.updateConfig(this.config)
-
-    // InitVariables(this, this.state)
-    // this.setPresetDefinitions(GetPresetsList(this))
-    // this.setFeedbackDefinitions(GetFeedbacksList(this))
-    // this.setActions(GetActionsList())
-
-    // this.checkFeedbacks()
   }
 
   /**
@@ -130,6 +123,10 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
     })
     device.Events.on(SonosEvents.GroupName, () => {
       // this.checkFeedbacks(FeedbackId.GroupName) // TODO
+      updateVariables(this, this.manager)
+    })
+    device.Events.on(SonosEvents.Volume, () => {
+      this.checkFeedbacks(FeedbackId.Volume)
       updateVariables(this, this.manager)
     })
   }
