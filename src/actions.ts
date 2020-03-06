@@ -76,13 +76,13 @@ export function HandleAction(
         if (device) {
           switch (opt.mode) {
             case PlayPauseToggle.Play:
-              device.Play().catch(e => instance.log(`Sonos: Play failed: ${e}`))
+              device.Play().catch(e => instance.log('warn', `Sonos: Play failed: ${e}`))
               break
             case PlayPauseToggle.Pause:
-              device.Pause().catch(e => instance.log(`Sonos: Pause failed: ${e}`))
+              device.Pause().catch(e => instance.log('warn', `Sonos: Pause failed: ${e}`))
               break
             default:
-              device.TogglePlayback().catch(e => instance.log(`Sonos: Play/Pause toggle failed: ${e}`))
+              device.TogglePlayback().catch(e => instance.log('warn', `Sonos: Play/Pause toggle failed: ${e}`))
               break
           }
         }
@@ -91,14 +91,14 @@ export function HandleAction(
       case ActionId.NextTrack: {
         const device = getDevice()
         if (device) {
-          device.Next().catch(e => instance.log(`Sonos: NextTrack failed: ${e}`))
+          device.Next().catch(e => instance.log('warn', `Sonos: NextTrack failed: ${e}`))
         }
         break
       }
       case ActionId.PreviousTrack: {
         const device = getDevice()
         if (device) {
-          device.Previous().catch(e => instance.log(`Sonos: PreviousTrack failed: ${e}`))
+          device.Previous().catch(e => instance.log('warn', `Sonos: PreviousTrack failed: ${e}`))
         }
         break
       }
