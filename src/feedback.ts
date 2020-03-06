@@ -5,7 +5,9 @@ import {
   CompanionFeedbackEvent,
   CompanionFeedbackResult,
   CompanionFeedbacks,
-  CompanionInputFieldColor
+  CompanionInputFieldColor,
+  CompanionInputFieldDropdown,
+  InputValue
 } from '../../../instance_skel_types'
 import { DevicePicker, VolumePicker } from './choices'
 import { DeviceConfig } from './config'
@@ -16,6 +18,12 @@ export enum FeedbackId {
   Paused = 'paused',
   Stopped = 'stopped',
   Volume = 'volume'
+}
+
+export enum VolumeComparitor {
+  Equal = 'eq',
+  LessThan = 'lt',
+  GreaterThan = 'gt'
 }
 
 export function ForegroundPicker(color: number): CompanionInputFieldColor {
@@ -32,6 +40,20 @@ export function BackgroundPicker(color: number): CompanionInputFieldColor {
     label: 'Background color',
     id: 'bg',
     default: color
+  }
+}
+function VolumeComparitorPicker(): CompanionInputFieldDropdown {
+  const options = [
+    { id: VolumeComparitor.Equal, label: 'Equal' },
+    { id: VolumeComparitor.GreaterThan, label: 'Greater than' },
+    { id: VolumeComparitor.LessThan, label: 'Less than>' }
+  ]
+  return {
+    type: 'dropdown',
+    label: 'Comparitor',
+    id: 'comparitor',
+    default: VolumeComparitor.Equal,
+    choices: options
   }
 }
 
@@ -68,11 +90,28 @@ export function GetFeedbacksList(instance: InstanceSkel<DeviceConfig>, devices: 
       ForegroundPicker(instance.rgb(255, 255, 255)),
       BackgroundPicker(instance.rgb(255, 0, 0)),
       DevicePicker(devices),
+      VolumeComparitorPicker(),
       VolumePicker()
     ]
   }
 
   return feedbacks
+}
+
+function compareVolume(target: InputValue | undefined, comparitor: InputValue | undefined, currentValue: number) {
+  const targetVolume = Number(target)
+  if (isNaN(targetVolume)) {
+    return false
+  }
+
+  switch (comparitor) {
+    case VolumeComparitor.GreaterThan:
+      return currentValue > targetVolume
+    case VolumeComparitor.LessThan:
+      return currentValue < targetVolume
+    default:
+      return currentValue === targetVolume
+  }
 }
 
 export function ExecuteFeedback(
@@ -113,8 +152,7 @@ export function ExecuteFeedback(
     }
     case FeedbackId.Volume: {
       const device = getDevice()
-      console.log(device?.Volume, opt.volume)
-      if (device?.Volume === Number(opt.volume)) {
+      if (device?.Volume !== undefined && compareVolume(opt.volume, opt.comparitor, device?.Volume)) {
         return getOptColors()
       }
       break

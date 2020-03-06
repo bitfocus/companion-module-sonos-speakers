@@ -10,7 +10,7 @@ import {
 import { GetActionsList, HandleAction } from './actions'
 import { DeviceConfig, GetConfigFields } from './config'
 import { ExecuteFeedback, FeedbackId, GetFeedbacksList } from './feedback'
-// import { GetPresetsList } from './presets'
+import { GetPresetsList } from './presets'
 import { InitVariables, updateVariables } from './variables'
 
 class ControllerInstance extends InstanceSkel<DeviceConfig> {
@@ -63,6 +63,7 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
         this.manager.Devices.forEach(d => this.subscribeEvents(d))
 
         InitVariables(this, this.manager)
+        this.setPresetDefinitions(GetPresetsList(this, this.manager))
         this.setActions(GetActionsList(this.manager.Devices))
         this.setFeedbackDefinitions(GetFeedbacksList(this, this.manager.Devices))
 
@@ -123,6 +124,7 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
     })
     device.Events.on(SonosEvents.GroupName, () => {
       // this.checkFeedbacks(FeedbackId.GroupName) // TODO
+      this.setPresetDefinitions(GetPresetsList(this, this.manager))
       updateVariables(this, this.manager)
     })
     device.Events.on(SonosEvents.Volume, () => {
