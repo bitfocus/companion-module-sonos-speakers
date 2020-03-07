@@ -2,12 +2,12 @@
 	"name": "sonos",
 	"version": "0.1.0",
 	"api_version": "1.0.0",
-	"description": "Sonos",
+	"description": "Sonos Speakers",
 	"keywords": [
 		"Audio", "Media"
 	],
 	"manufacturer": "Sonos",
-	"product": "Sonos",
+	"product": "Speakers",
 	"shortname": "sonos",
 	"homepage": "https://github.com/bitfocus/companion-module-sonos#readme",
 	"main": "dist/index.js",

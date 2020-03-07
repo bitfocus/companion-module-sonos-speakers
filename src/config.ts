@@ -11,7 +11,7 @@ export function GetConfigFields(self: InstanceSkel<DeviceConfig>): SomeCompanion
     {
       type: 'textinput',
       id: 'host',
-      label: 'Target IP',
+      label: 'Discovery IP (any sonos device in the system)',
       width: 6,
       regex: self.REGEX_IP
     }
