@@ -1,5 +1,5 @@
 {
-	"name": "sonos",
+	"name": "sonos-speakers",
 	"version": "0.1.0",
 	"api_version": "1.0.0",
 	"description": "Sonos Speakers",
@@ -8,8 +8,8 @@
 	],
 	"manufacturer": "Sonos",
 	"product": "Speakers",
-	"shortname": "sonos",
-	"homepage": "https://github.com/bitfocus/companion-module-sonos#readme",
+	"shortname": "sonos-speakers",
+	"homepage": "https://github.com/bitfocus/companion-module-sonos-speakers#readme",
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "trash dist && yarn build:main",
