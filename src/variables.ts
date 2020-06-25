@@ -3,8 +3,8 @@ import InstanceSkel = require('../../../instance_skel')
 import { CompanionVariable } from '../../../instance_skel_types'
 import { DeviceConfig } from './config'
 
-export function updateVariables(instance: InstanceSkel<DeviceConfig>, manager: SonosManager) {
-  function numToString(val: number | undefined) {
+export function updateVariables(instance: InstanceSkel<DeviceConfig>, manager: SonosManager): void {
+  function numToString(val: number | undefined): string {
     if (val === undefined) {
       return '-'
     } else {
@@ -19,7 +19,7 @@ export function updateVariables(instance: InstanceSkel<DeviceConfig>, manager: S
   })
 }
 
-export function InitVariables(instance: InstanceSkel<DeviceConfig>, manager: SonosManager) {
+export function InitVariables(instance: InstanceSkel<DeviceConfig>, manager: SonosManager): void {
   const variables: CompanionVariable[] = []
 
   manager.Devices.forEach(dev => {

@@ -1,4 +1,4 @@
-export function assertUnreachable(_never: never) {
+export function assertUnreachable(_never: never): void {
   // throw new Error('Unreachable')
 }
 

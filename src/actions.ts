@@ -30,7 +30,7 @@ function VolumeDeltaPicker(): CompanionInputFieldNumber {
   }
 }
 
-export function GetActionsList(devices: SonosDevice[]) {
+export function GetActionsList(devices: SonosDevice[]): CompanionActions {
   const actions: CompanionActions = {}
 
   actions[ActionId.PlayPause] = {
@@ -74,9 +74,9 @@ export function HandleAction(
   instance: InstanceSkel<DeviceConfig>,
   manager: SonosManager,
   action: CompanionActionEvent
-) {
+): void {
   const opt = action.options
-  const getOptInt = (key: string) => {
+  const getOptInt = (key: string): number => {
     const val = Number(opt[key])
     if (isNaN(val)) {
       throw new Error(`Invalid option '${key}'`)
@@ -87,7 +87,7 @@ export function HandleAction(
   //   return !!opt[key]
   // }
 
-  const getDevice = () => manager.Devices.find(d => d.uuid === opt.device)
+  const getDevice = (): SonosDevice | undefined => manager.Devices.find(d => d.uuid === opt.device)
 
   try {
     const actionId = action.action as ActionId

@@ -25,7 +25,7 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
   }
 
   // Override base types to make types stricter
-  public checkFeedbacks(feedbackId?: FeedbackId, ignoreInitDone?: boolean) {
+  public checkFeedbacks(feedbackId?: FeedbackId, ignoreInitDone?: boolean): void {
     if (ignoreInitDone || this.initDone) {
       super.checkFeedbacks(feedbackId)
     }
@@ -35,7 +35,7 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
    * Main initialization function called once the module
    * is OK to start doing things.
    */
-  public init() {
+  public init(): void {
     this.status(this.STATUS_UNKNOWN)
     this.updateConfig(this.config)
   }
@@ -43,7 +43,7 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
   /**
    * Process an updated configuration array.
    */
-  public updateConfig(config: DeviceConfig) {
+  public updateConfig(config: DeviceConfig): void {
     this.config = config
 
     try {
@@ -76,20 +76,17 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
       })
   }
 
-  public upgradeConfig() {
-    // Nothing to do
-  }
-
   /**
    * Executes the provided action.
    */
-  public action(action: CompanionActionEvent) {
+  public action(action: CompanionActionEvent): void {
     HandleAction(this, this.manager, action)
   }
 
   /**
    * Creates the configuration fields for web config.
    */
+  // eslint-disable-next-line @typescript-eslint/camelcase
   public config_fields(): CompanionConfigField[] {
     return GetConfigFields(this)
   }
@@ -97,7 +94,7 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
   /**
    * Clean up the instance before it is destroyed.
    */
-  public destroy() {
+  public destroy(): void {
     try {
       // if (this.manager) {
       this.manager.CancelSubscription()
@@ -116,7 +113,7 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
     return ExecuteFeedback(this, this.manager, feedback)
   }
 
-  private subscribeEvents(device: SonosDevice) {
+  private subscribeEvents(device: SonosDevice): void {
     device.Events.on(SonosEvents.CurrentTransportState, () => {
       this.checkFeedbacks(FeedbackId.Playing)
       this.checkFeedbacks(FeedbackId.Paused)

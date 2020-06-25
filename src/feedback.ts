@@ -57,7 +57,7 @@ function VolumeComparitorPicker(): CompanionInputFieldDropdown {
   }
 }
 
-export function GetFeedbacksList(instance: InstanceSkel<DeviceConfig>, devices: SonosDevice[]) {
+export function GetFeedbacksList(instance: InstanceSkel<DeviceConfig>, devices: SonosDevice[]): CompanionFeedbacks {
   const feedbacks: CompanionFeedbacks = {}
 
   feedbacks[FeedbackId.Playing] = {
@@ -98,7 +98,11 @@ export function GetFeedbacksList(instance: InstanceSkel<DeviceConfig>, devices: 
   return feedbacks
 }
 
-function compareVolume(target: InputValue | undefined, comparitor: InputValue | undefined, currentValue: number) {
+function compareVolume(
+  target: InputValue | undefined,
+  comparitor: InputValue | undefined,
+  currentValue: number
+): boolean {
   const targetVolume = Number(target)
   if (isNaN(targetVolume)) {
     return false
@@ -120,9 +124,9 @@ export function ExecuteFeedback(
   feedback: CompanionFeedbackEvent
 ): CompanionFeedbackResult {
   const opt = feedback.options
-  const getOptColors = () => ({ color: Number(opt.fg), bgcolor: Number(opt.bg) })
+  const getOptColors = (): CompanionFeedbackResult => ({ color: Number(opt.fg), bgcolor: Number(opt.bg) })
 
-  const getDevice = () => manager.Devices.find(d => d.uuid === opt.device)
+  const getDevice = (): SonosDevice | undefined => manager.Devices.find(d => d.uuid === opt.device)
 
   const feedbackType = feedback.type as FeedbackId
   switch (feedbackType) {
