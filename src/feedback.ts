@@ -46,7 +46,7 @@ function VolumeComparitorPicker(): CompanionInputFieldDropdown {
   const options = [
     { id: VolumeComparitor.Equal, label: 'Equal' },
     { id: VolumeComparitor.GreaterThan, label: 'Greater than' },
-    { id: VolumeComparitor.LessThan, label: 'Less than>' }
+    { id: VolumeComparitor.LessThan, label: 'Less than' }
   ]
   return {
     type: 'dropdown',
