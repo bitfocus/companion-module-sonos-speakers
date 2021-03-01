@@ -16,7 +16,9 @@
 		"build": "rimraf dist && yarn build:main",
 		"build:main": "tsc -p tsconfig.build.json",
 		"build:watch": "tsc -p tsconfig.build.json --watch",
-		"lint": "eslint . --ext .ts",
+		"lint": "eslint . --ext .ts --ext .js --ignore-pattern dist",
+		"lint-fix": "yarn lint --fix",
+		"license-validate": "yarn sofie-licensecheck",
 		"postinstall": "yarn build"
 	},
 	"author": "Julian Waller <git@julusian.co.uk>",
