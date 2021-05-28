@@ -25,9 +25,9 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
 	}
 
 	// Override base types to make types stricter
-	public checkFeedbacks(feedbackId?: FeedbackId, ignoreInitDone?: boolean): void {
-		if (ignoreInitDone || this.initDone) {
-			super.checkFeedbacks(feedbackId)
+	public checkFeedbacks(...feedbackTypes: FeedbackId[]): void {
+		if (this.initDone) {
+			super.checkFeedbacks(...feedbackTypes)
 		}
 	}
 
@@ -114,9 +114,7 @@ class ControllerInstance extends InstanceSkel<DeviceConfig> {
 
 	private subscribeEvents(device: SonosDevice): void {
 		device.Events.on(SonosEvents.CurrentTransportState, () => {
-			this.checkFeedbacks(FeedbackId.Playing)
-			this.checkFeedbacks(FeedbackId.Paused)
-			this.checkFeedbacks(FeedbackId.Stopped)
+			this.checkFeedbacks(FeedbackId.Playing, FeedbackId.Paused, FeedbackId.Stopped)
 		})
 		device.Events.on(SonosEvents.GroupName, () => {
 			// this.checkFeedbacks(FeedbackId.GroupName) // TODO
