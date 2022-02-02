@@ -1,6 +1,6 @@
 {
 	"name": "sonos-speakers",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"api_version": "1.0.0",
 	"description": "Sonos Speakers",
 	"keywords": [
