@@ -1,6 +1,6 @@
 {
 	"name": "sonos-speakers",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"api_version": "1.0.0",
 	"description": "Sonos Speakers",
 	"keywords": [
@@ -13,7 +13,7 @@
 	"homepage": "https://github.com/bitfocus/companion-module-sonos-speakers#readme",
 	"main": "dist/index.js",
 	"scripts": {
-		"build": "npx rimraf dist && npx typescript@~4.2 -p tsconfig.build.json",
+		"build": "npx rimraf dist && npx --package=typescript@~4.2 -c 'tsc -p tsconfig.build.json'",
 		"build:main": "tsc -p tsconfig.build.json",
 		"build:watch": "tsc -p tsconfig.build.json --watch",
 		"lint": "eslint . --ext .ts --ext .js --ignore-pattern dist",
