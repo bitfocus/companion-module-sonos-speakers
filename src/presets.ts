@@ -1,140 +1,151 @@
-import { SonosDevice, SonosManager } from '@svrooij/sonos'
-import InstanceSkel = require('../../../instance_skel')
-import { CompanionPreset } from '../../../instance_skel_types'
-import { ActionId, PlayPauseToggle } from './actions'
-import { DeviceConfig } from './config'
-import { FeedbackId, VolumeComparitor } from './feedback'
-
-interface CompanionPresetExt extends CompanionPreset {
-	feedbacks: Array<
-		{
-			type: FeedbackId
-		} & CompanionPreset['feedbacks'][0]
-	>
-	actions: Array<
-		{
-			action: ActionId
-		} & CompanionPreset['actions'][0]
-	>
-}
+import type { SonosDevice, SonosManager } from '@svrooij/sonos'
+import { ActionId, PlayPauseToggle } from './actions.js'
+import { FeedbackId, VolumeComparitor } from './feedback.js'
+import {
+	combineRgb,
+	type CompanionPresetDefinitions,
+	type CompanionButtonPresetDefinition,
+} from '@companion-module/base'
 
 function VolumeDelta(
-	instance: InstanceSkel<DeviceConfig>,
 	device: SonosDevice,
 	actionId: ActionId,
 	volumeFeedback: FeedbackId,
 	delta: number
-): CompanionPresetExt {
+): CompanionButtonPresetDefinition {
 	const deltaStr = delta > 0 ? `+${delta}` : `${delta}`
 	return {
 		category: 'Volume',
-		label: `${device.Name} Volume ${deltaStr}%`,
-		bank: {
-			style: 'text',
+		name: `${device.Name} Volume ${deltaStr}%`,
+		type: 'button',
+		style: {
 			text: `${device.Name} ${deltaStr}%`,
 			size: 'auto',
-			color: instance.rgb(255, 255, 255),
-			bgcolor: instance.rgb(0, 0, 0),
+			color: combineRgb(255, 255, 255),
+			bgcolor: combineRgb(0, 0, 0),
 		},
 		feedbacks: [
 			{
-				type: volumeFeedback,
+				feedbackId: volumeFeedback,
+				style: {
+					bgcolor: combineRgb(238, 238, 0),
+					color: combineRgb(0, 0, 0),
+				},
 				options: {
-					bg: instance.rgb(238, 238, 0),
-					fg: instance.rgb(0, 0, 0),
 					volume: delta > 0 ? 100 : 0,
 					comparitor: VolumeComparitor.Equal,
 				},
 			},
 		],
-		actions: [
+		steps: [
 			{
-				action: actionId,
-				options: {
-					device: device.uuid,
-					delta,
-				},
+				down: [
+					{
+						actionId: actionId,
+						options: {
+							device: device.uuid,
+							delta,
+						},
+					},
+				],
+				up: [],
 			},
 		],
 	}
 }
 
-export function GetPresetsList(instance: InstanceSkel<DeviceConfig>, manager: SonosManager): CompanionPreset[] {
-	const presets: CompanionPresetExt[] = []
+export function GetPresetsList(manager: SonosManager): CompanionPresetDefinitions {
+	const presets: CompanionPresetDefinitions = {}
 
 	manager.Devices.forEach((device) => {
-		presets.push({
+		presets[`volume_100_${device.uuid}`] = {
 			category: 'Volume',
-			label: `${device.Name} Volume 100%`,
-			bank: {
-				style: 'text',
+			name: `${device.Name} Volume 100%`,
+			type: 'button',
+			style: {
 				text: `${device.Name} 100%`,
 				size: 'auto',
-				color: instance.rgb(255, 255, 255),
-				bgcolor: instance.rgb(0, 0, 0),
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
 			},
 			feedbacks: [],
-			actions: [
+			steps: [
 				{
-					action: ActionId.Volume,
-					options: {
-						device: device.uuid,
-						volume: 100,
-					},
+					down: [
+						{
+							actionId: ActionId.Volume,
+							options: {
+								device: device.uuid,
+								volume: 100,
+							},
+						},
+					],
+					up: [],
 				},
 			],
-		})
-		presets.push(VolumeDelta(instance, device, ActionId.VolumeDelta, FeedbackId.Volume, +5))
-		presets.push(VolumeDelta(instance, device, ActionId.VolumeDelta, FeedbackId.Volume, +1))
-		presets.push(VolumeDelta(instance, device, ActionId.VolumeDelta, FeedbackId.Volume, -5))
-		presets.push(VolumeDelta(instance, device, ActionId.VolumeDelta, FeedbackId.Volume, -1))
+		}
+		presets[`volume_+5_${device.uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, +5)
+		presets[`volume_+1_${device.uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, +1)
+		presets[`volume_-5_${device.uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, -5)
+		presets[`volume_-1_${device.uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, -1)
 
-		presets.push({
+		presets[`play_pause_${device.uuid}`] = {
 			category: 'Playback',
-			label: `${device.Name} Play/Pause`,
-			bank: {
-				style: 'text',
+			name: `${device.Name} Play/Pause`,
+			type: 'button',
+			style: {
 				text: `${device.Name} P/P`,
 				size: 'auto',
-				color: instance.rgb(255, 255, 255),
-				bgcolor: instance.rgb(0, 0, 0),
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
 			},
 			feedbacks: [
 				{
-					type: FeedbackId.Playing,
+					feedbackId: FeedbackId.Playing,
+					style: {
+						bgcolor: combineRgb(0, 255, 0),
+						color: combineRgb(0, 0, 0),
+					},
 					options: {
-						bg: instance.rgb(0, 255, 0),
-						fg: instance.rgb(0, 0, 0),
 						device: device.uuid,
 					},
 				},
 				{
-					type: FeedbackId.Paused,
+					feedbackId: FeedbackId.Paused,
+					style: {
+						bgcolor: combineRgb(255, 255, 0),
+						color: combineRgb(0, 0, 0),
+					},
 					options: {
-						bg: instance.rgb(255, 255, 0),
-						fg: instance.rgb(0, 0, 0),
 						device: device.uuid,
 					},
 				},
 				{
-					type: FeedbackId.Stopped,
+					feedbackId: FeedbackId.Stopped,
+					style: {
+						bgcolor: combineRgb(255, 0, 0),
+						color: combineRgb(255, 255, 255),
+					},
 					options: {
-						bg: instance.rgb(255, 0, 0),
-						fg: instance.rgb(255, 255, 255),
 						device: device.uuid,
 					},
 				},
 			],
-			actions: [
+			steps: [
 				{
-					action: ActionId.PlayPause,
-					options: {
-						device: device.uuid,
-						mode: PlayPauseToggle.Toggle,
-					},
+					down: [
+						{
+							actionId: ActionId.PlayPause,
+							options: {
+								device: device.uuid,
+								mode: PlayPauseToggle.Toggle,
+							},
+						},
+					],
+					up: [],
 				},
 			],
-		})
+		}
 	})
 
 	return presets

@@ -1,19 +1,18 @@
-import InstanceSkel = require('../../../instance_skel')
-import { SomeCompanionConfigField } from '../../../instance_skel_types'
+import { Regex, type SomeCompanionConfigField } from '@companion-module/base'
 
 export interface DeviceConfig {
 	host?: string
 	port?: string
 }
 
-export function GetConfigFields(self: InstanceSkel<DeviceConfig>): SomeCompanionConfigField[] {
+export function GetConfigFields(): SomeCompanionConfigField[] {
 	return [
 		{
 			type: 'textinput',
 			id: 'host',
 			label: 'Discovery IP (any sonos device in the system)',
 			width: 6,
-			regex: self.REGEX_IP,
+			regex: Regex.IP,
 		},
 	]
 }

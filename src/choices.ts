@@ -1,5 +1,5 @@
-import { SonosDevice } from '@svrooij/sonos'
-import { CompanionInputFieldDropdown, CompanionInputFieldNumber } from '../../../instance_skel_types'
+import type { CompanionInputFieldDropdown, CompanionInputFieldNumber } from '@companion-module/base'
+import type { SonosDevice } from '@svrooij/sonos'
 
 export function DevicePicker(devices: SonosDevice[]): CompanionInputFieldDropdown {
 	const choices = devices.map((d) => ({

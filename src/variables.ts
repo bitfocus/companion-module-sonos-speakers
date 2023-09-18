@@ -1,9 +1,8 @@
 import { SonosManager } from '@svrooij/sonos'
-import InstanceSkel = require('../../../instance_skel')
-import { CompanionVariable } from '../../../instance_skel_types'
-import { DeviceConfig } from './config'
+import { DeviceConfig } from './config.js'
+import { CompanionVariableDefinition, CompanionVariableValues, InstanceBase } from '@companion-module/base'
 
-export function updateVariables(instance: InstanceSkel<DeviceConfig>, manager: SonosManager): void {
+export function updateVariables(instance: InstanceBase<DeviceConfig>, manager: SonosManager): void {
 	function numToString(val: number | undefined): string {
 		if (val === undefined) {
 			return '-'
@@ -12,28 +11,32 @@ export function updateVariables(instance: InstanceSkel<DeviceConfig>, manager: S
 		}
 	}
 
+	const newValues: CompanionVariableValues = {}
+
 	manager.Devices.forEach((dev) => {
-		instance.setVariable(`device.${dev.uuid}.name`, dev.Name)
-		instance.setVariable(`device.${dev.uuid}.group`, dev.GroupName || '')
-		instance.setVariable(`device.${dev.uuid}.volume`, numToString(dev.Volume))
+		newValues[`device.${dev.uuid}.name`] = dev.Name
+		newValues[`device.${dev.uuid}.group`] = dev.GroupName || ''
+		newValues[`device.${dev.uuid}.volume`] = numToString(dev.Volume)
 	})
+
+	instance.setVariableValues(newValues)
 }
 
-export function InitVariables(instance: InstanceSkel<DeviceConfig>, manager: SonosManager): void {
-	const variables: CompanionVariable[] = []
+export function InitVariables(instance: InstanceBase<DeviceConfig>, manager: SonosManager): void {
+	const variables: CompanionVariableDefinition[] = []
 
 	manager.Devices.forEach((dev) => {
 		variables.push({
-			label: `Device name (${dev.Name})`,
-			name: `device.${dev.uuid}.name`,
+			name: `Device name (${dev.Name})`,
+			variableId: `device.${dev.uuid}.name`,
 		})
 		variables.push({
-			label: `Device group (${dev.GroupName})`,
-			name: `device.${dev.uuid}.group`,
+			name: `Device group (${dev.GroupName})`,
+			variableId: `device.${dev.uuid}.group`,
 		})
 		variables.push({
-			label: `Device volume (${dev.GroupName})`,
-			name: `device.${dev.uuid}.volume`,
+			name: `Device volume (${dev.GroupName})`,
+			variableId: `device.${dev.uuid}.volume`,
 		})
 	})
 

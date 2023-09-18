@@ -1,7 +1,7 @@
 {
 	"name": "sonos-speakers",
 	"version": "1.0.0",
-	"main": "dist/index.js",
+	"main": "dist/main.js",
 	"type": "module",
 	"scripts": {
 		"build": "rimraf dist && yarn build:main",

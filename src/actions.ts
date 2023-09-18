@@ -1,9 +1,10 @@
-import { SonosDevice, SonosManager } from '@svrooij/sonos'
-import InstanceSkel = require('../../../instance_skel')
-import { CompanionActionEvent, CompanionActions, CompanionInputFieldNumber } from '../../../instance_skel_types'
-import { DevicePicker, VolumePicker } from './choices'
-import { DeviceConfig } from './config'
-import { assertUnreachable } from './util'
+import type { SonosDevice, SonosManager } from '@svrooij/sonos'
+import { DevicePicker, VolumePicker } from './choices.js'
+import type {
+	CompanionActionDefinitions,
+	CompanionActionEvent,
+	CompanionInputFieldNumber,
+} from '@companion-module/base'
 
 export enum PlayPauseToggle {
 	Play = 'play',
@@ -30,11 +31,24 @@ function VolumeDeltaPicker(): CompanionInputFieldNumber {
 	}
 }
 
-export function GetActionsList(devices: SonosDevice[]): CompanionActions {
-	const actions: CompanionActions = {}
+export function GetActionsList(manager: SonosManager): CompanionActionDefinitions {
+	const devices = manager.Devices
+
+	const getDevice = (action: CompanionActionEvent): SonosDevice | undefined =>
+		manager.Devices.find((d) => d.uuid === action.options.device)
+
+	const getOptInt = (action: CompanionActionEvent, key: string): number => {
+		const val = Number(action.options[key])
+		if (isNaN(val)) {
+			throw new Error(`Invalid option '${key}'`)
+		}
+		return val
+	}
+
+	const actions: CompanionActionDefinitions = {}
 
 	actions[ActionId.PlayPause] = {
-		label: 'Play/pause',
+		name: 'Play/pause',
 		options: [
 			DevicePicker(devices),
 			{
@@ -49,101 +63,77 @@ export function GetActionsList(devices: SonosDevice[]): CompanionActions {
 				],
 			},
 		],
+		callback: async (action) => {
+			const device = getDevice(action)
+			if (device) {
+				switch (action.options.mode) {
+					case PlayPauseToggle.Play:
+						await device.Play().catch((e) => {
+							throw new Error(`Sonos: Play failed: ${e}`)
+						})
+						break
+					case PlayPauseToggle.Pause:
+						await device.Pause().catch((e) => {
+							throw new Error(`Sonos: Pause failed: ${e}`)
+						})
+						break
+					default:
+						await device.TogglePlayback().catch((e) => {
+							throw new Error(`Sonos: Play/Pause toggle failed: ${e}`)
+						})
+						break
+				}
+			}
+		},
 	}
 	actions[ActionId.NextTrack] = {
-		label: 'Next Track',
+		name: 'Next Track',
 		options: [DevicePicker(devices)],
+		callback: async (action) => {
+			const device = getDevice(action)
+			if (device) {
+				await device.Next().catch((e) => {
+					throw new Error(`Sonos: NextTrack failed: ${e}`)
+				})
+			}
+		},
 	}
 	actions[ActionId.PreviousTrack] = {
-		label: 'Previous Track',
+		name: 'Previous Track',
 		options: [DevicePicker(devices)],
+		callback: async (action) => {
+			const device = getDevice(action)
+			if (device) {
+				await device.Previous().catch((e) => {
+					throw new Error(`Sonos: PreviousTrack failed: ${e}`)
+				})
+			}
+		},
 	}
 	actions[ActionId.Volume] = {
-		label: 'Set Volume',
+		name: 'Set Volume',
 		options: [DevicePicker(devices), VolumePicker()],
+		callback: async (action) => {
+			const device = getDevice(action)
+			if (device) {
+				await device.SetVolume(getOptInt(action, 'volume')).catch((e) => {
+					throw new Error(`Sonos: PreviousTrack failed: ${e}`)
+				})
+			}
+		},
 	}
 	actions[ActionId.VolumeDelta] = {
-		label: 'Adjust Volume',
+		name: 'Adjust Volume',
 		options: [DevicePicker(devices), VolumeDeltaPicker()],
+		callback: async (action) => {
+			const device = getDevice(action)
+			if (device) {
+				await device.SetRelativeVolume(getOptInt(action, 'delta')).catch((e) => {
+					throw new Error(`Sonos: PreviousTrack failed: ${e}`)
+				})
+			}
+		},
 	}
 
 	return actions
-}
-
-export function HandleAction(
-	instance: InstanceSkel<DeviceConfig>,
-	manager: SonosManager,
-	action: CompanionActionEvent
-): void {
-	const opt = action.options
-	const getOptInt = (key: string): number => {
-		const val = Number(opt[key])
-		if (isNaN(val)) {
-			throw new Error(`Invalid option '${key}'`)
-		}
-		return val
-	}
-	// const getOptBool = (key: string) => {
-	//   return !!opt[key]
-	// }
-
-	const getDevice = (): SonosDevice | undefined => manager.Devices.find((d) => d.uuid === opt.device)
-
-	try {
-		const actionId = action.action as ActionId
-		switch (actionId) {
-			case ActionId.PlayPause: {
-				const device = getDevice()
-				if (device) {
-					switch (opt.mode) {
-						case PlayPauseToggle.Play:
-							device.Play().catch((e) => instance.log('warn', `Sonos: Play failed: ${e}`))
-							break
-						case PlayPauseToggle.Pause:
-							device.Pause().catch((e) => instance.log('warn', `Sonos: Pause failed: ${e}`))
-							break
-						default:
-							device.TogglePlayback().catch((e) => instance.log('warn', `Sonos: Play/Pause toggle failed: ${e}`))
-							break
-					}
-				}
-				break
-			}
-			case ActionId.NextTrack: {
-				const device = getDevice()
-				if (device) {
-					device.Next().catch((e) => instance.log('warn', `Sonos: NextTrack failed: ${e}`))
-				}
-				break
-			}
-			case ActionId.PreviousTrack: {
-				const device = getDevice()
-				if (device) {
-					device.Previous().catch((e) => instance.log('warn', `Sonos: PreviousTrack failed: ${e}`))
-				}
-				break
-			}
-			case ActionId.Volume: {
-				const device = getDevice()
-				if (device) {
-					device.SetVolume(getOptInt('volume')).catch((e) => instance.log('warn', `Sonos: PreviousTrack failed: ${e}`))
-				}
-				break
-			}
-			case ActionId.VolumeDelta: {
-				const device = getDevice()
-				if (device) {
-					device
-						.SetRelativeVolume(getOptInt('delta'))
-						.catch((e) => instance.log('warn', `Sonos: PreviousTrack failed: ${e}`))
-				}
-				break
-			}
-			default:
-				assertUnreachable(actionId)
-				instance.debug('Unknown action: ' + action.action)
-		}
-	} catch (e) {
-		instance.debug('Action failed: ' + e)
-	}
 }
