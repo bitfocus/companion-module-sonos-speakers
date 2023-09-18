@@ -1,5 +1,7 @@
 ## SONOS
 
+🛑🛑 This module needs a maintainer 🛑🛑
+
 **Available commands**
 
 - Set volume
