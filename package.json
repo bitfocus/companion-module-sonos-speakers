@@ -25,13 +25,13 @@
 		"node": "^18"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.4",
+		"@companion-module/base": "~1.6",
 		"@svrooij/sonos": "^1.1.4"
 	},
 	"devDependencies": {
 		"@companion-module/tools": "^1.4.1",
-		"@types/node": "^18.17.17",
-		"rimraf": "^5.0.1",
+		"@types/node": "^18.19.3",
+		"rimraf": "^5.0.5",
 		"typescript": "~5.2"
 	},
 	"repository": {
