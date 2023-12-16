@@ -19,6 +19,7 @@ export enum ActionId {
 	Mute = 'mute',
 	Volume = 'volume',
 	VolumeDelta = 'volume_delta',
+	LoadStreamUri = 'load_stream_uri',
 }
 
 function VolumeDeltaPicker(): CompanionInputFieldNumber {
@@ -153,6 +154,61 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 				await device.SetRelativeVolume(getOptInt(action, 'delta')).catch((e) => {
 					throw new Error(`Sonos: PreviousTrack failed: ${e}`)
 				})
+			}
+		},
+	}
+
+	actions[ActionId.LoadStreamUri] = {
+		name: 'Load Stream Uri',
+		options: [
+			DevicePicker(devices),
+			{
+				type: 'textinput',
+				label: 'Stream URI',
+				id: 'streamUri',
+				useVariables: true,
+			},
+			{
+				type: 'static-text',
+				id: 'help',
+				value: '',
+				label:
+					'Read about the supported formats at https://sonos-ts.svrooij.io/sonos-device/methods.html#metadata\nIf your uri is not supported, you can follow their steps to figure out the data needed, and if it needs metadata provide that below',
+			},
+			{
+				type: 'textinput',
+				label: 'Manual Metadata',
+				id: 'streamMetadata',
+				useVariables: true,
+			},
+			{
+				type: 'checkbox',
+				label: 'Autoplay',
+				id: 'autoplay',
+				default: true,
+			},
+		],
+		callback: async (action, context) => {
+			const streamUri = await context.parseVariablesInString(String(action.options.streamUri))
+			const streamMetadata = await context.parseVariablesInString(String(action.options.streamMetadata ?? ''))
+			console.log('try', streamUri, streamMetadata)
+			const device = getDevice(action)
+			if (device) {
+				if (streamMetadata) {
+					await device.AVTransportService.SetAVTransportURI({
+						InstanceID: 0,
+						CurrentURI: streamUri,
+						CurrentURIMetaData: streamMetadata,
+					})
+				} else {
+					await device.SetAVTransportURI(streamUri).catch((e) => {
+						throw new Error(`Sonos: LoadStreamUri failed: ${e}`)
+					})
+				}
+
+				if (action.options.autoplay) {
+					await device.Play()
+				}
 			}
 		},
 	}

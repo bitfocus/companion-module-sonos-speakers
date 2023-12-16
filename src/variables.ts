@@ -17,6 +17,7 @@ export function updateVariables(instance: InstanceBase<DeviceConfig>, manager: S
 		newValues[`device.${dev.Uuid}.name`] = dev.Name
 		newValues[`device.${dev.Uuid}.group`] = dev.GroupName || ''
 		newValues[`device.${dev.Uuid}.volume`] = numToString(dev.Volume)
+		newValues[`device.${dev.Uuid}.streamUri`] = dev.CurrentTrackUri
 	})
 
 	instance.setVariableValues(newValues)
@@ -37,6 +38,10 @@ export function InitVariables(instance: InstanceBase<DeviceConfig>, manager: Son
 		variables.push({
 			name: `Device volume (${dev.GroupName})`,
 			variableId: `device.${dev.Uuid}.volume`,
+		})
+		variables.push({
+			name: `Device stream URI (${dev.GroupName})`,
+			variableId: `device.${dev.Uuid}.streamUri`,
 		})
 	})
 
