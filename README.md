@@ -12,6 +12,12 @@ While developing the module, by using `yarn build:watch` the compiler will be ru
 
 ## Changes
 
+### v1.1.0
+
+- Add action and feedback for mute state
+- Update sonos library for improved compatibility
+- Add action to load stream by url
+
 ### v1.0.0
 
 - Update for Companion 3
