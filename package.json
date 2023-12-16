@@ -26,7 +26,7 @@
 	},
 	"dependencies": {
 		"@companion-module/base": "~1.6",
-		"@svrooij/sonos": "^1.1.4"
+		"@svrooij/sonos": "^2.5.0"
 	},
 	"devDependencies": {
 		"@companion-module/tools": "^1.4.1",

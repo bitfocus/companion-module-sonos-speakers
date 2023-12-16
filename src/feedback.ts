@@ -42,7 +42,7 @@ export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefini
 	const devices = manager.Devices
 
 	const getDevice = (event: CompanionFeedbackBooleanEvent): SonosDevice | undefined =>
-		manager.Devices.find((d) => d.uuid === event.options.device)
+		manager.Devices.find((d) => d.Uuid === event.options.device)
 
 	feedbacks[FeedbackId.Playing] = {
 		name: 'Device playing',
@@ -109,7 +109,7 @@ export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefini
 function compareVolume(
 	target: InputValue | undefined,
 	comparitor: InputValue | undefined,
-	currentValue: number
+	currentValue: number,
 ): boolean {
 	const targetVolume = Number(target)
 	if (isNaN(targetVolume)) {

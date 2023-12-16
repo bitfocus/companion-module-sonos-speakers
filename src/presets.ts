@@ -11,7 +11,7 @@ function VolumeDelta(
 	device: SonosDevice,
 	actionId: ActionId,
 	volumeFeedback: FeedbackId,
-	delta: number
+	delta: number,
 ): CompanionButtonPresetDefinition {
 	const deltaStr = delta > 0 ? `+${delta}` : `${delta}`
 	return {
@@ -43,7 +43,7 @@ function VolumeDelta(
 					{
 						actionId: actionId,
 						options: {
-							device: device.uuid,
+							device: device.Uuid,
 							delta,
 						},
 					},
@@ -58,7 +58,7 @@ export function GetPresetsList(manager: SonosManager): CompanionPresetDefinition
 	const presets: CompanionPresetDefinitions = {}
 
 	manager.Devices.forEach((device) => {
-		presets[`volume_100_${device.uuid}`] = {
+		presets[`volume_100_${device.Uuid}`] = {
 			category: 'Volume',
 			name: `${device.Name} Volume 100%`,
 			type: 'button',
@@ -75,7 +75,7 @@ export function GetPresetsList(manager: SonosManager): CompanionPresetDefinition
 						{
 							actionId: ActionId.Volume,
 							options: {
-								device: device.uuid,
+								device: device.Uuid,
 								volume: 100,
 							},
 						},
@@ -84,12 +84,12 @@ export function GetPresetsList(manager: SonosManager): CompanionPresetDefinition
 				},
 			],
 		}
-		presets[`volume_+5_${device.uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, +5)
-		presets[`volume_+1_${device.uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, +1)
-		presets[`volume_-5_${device.uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, -5)
-		presets[`volume_-1_${device.uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, -1)
+		presets[`volume_+5_${device.Uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, +5)
+		presets[`volume_+1_${device.Uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, +1)
+		presets[`volume_-5_${device.Uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, -5)
+		presets[`volume_-1_${device.Uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, -1)
 
-		presets[`play_pause_${device.uuid}`] = {
+		presets[`play_pause_${device.Uuid}`] = {
 			category: 'Playback',
 			name: `${device.Name} Play/Pause`,
 			type: 'button',
@@ -107,7 +107,7 @@ export function GetPresetsList(manager: SonosManager): CompanionPresetDefinition
 						color: combineRgb(0, 0, 0),
 					},
 					options: {
-						device: device.uuid,
+						device: device.Uuid,
 					},
 				},
 				{
@@ -117,7 +117,7 @@ export function GetPresetsList(manager: SonosManager): CompanionPresetDefinition
 						color: combineRgb(0, 0, 0),
 					},
 					options: {
-						device: device.uuid,
+						device: device.Uuid,
 					},
 				},
 				{
@@ -127,7 +127,7 @@ export function GetPresetsList(manager: SonosManager): CompanionPresetDefinition
 						color: combineRgb(255, 255, 255),
 					},
 					options: {
-						device: device.uuid,
+						device: device.Uuid,
 					},
 				},
 			],
@@ -137,7 +137,7 @@ export function GetPresetsList(manager: SonosManager): CompanionPresetDefinition
 						{
 							actionId: ActionId.PlayPause,
 							options: {
-								device: device.uuid,
+								device: device.Uuid,
 								mode: PlayPauseToggle.Toggle,
 							},
 						},

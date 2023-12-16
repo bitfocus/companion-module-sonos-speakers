@@ -14,9 +14,9 @@ export function updateVariables(instance: InstanceBase<DeviceConfig>, manager: S
 	const newValues: CompanionVariableValues = {}
 
 	manager.Devices.forEach((dev) => {
-		newValues[`device.${dev.uuid}.name`] = dev.Name
-		newValues[`device.${dev.uuid}.group`] = dev.GroupName || ''
-		newValues[`device.${dev.uuid}.volume`] = numToString(dev.Volume)
+		newValues[`device.${dev.Uuid}.name`] = dev.Name
+		newValues[`device.${dev.Uuid}.group`] = dev.GroupName || ''
+		newValues[`device.${dev.Uuid}.volume`] = numToString(dev.Volume)
 	})
 
 	instance.setVariableValues(newValues)
@@ -28,15 +28,15 @@ export function InitVariables(instance: InstanceBase<DeviceConfig>, manager: Son
 	manager.Devices.forEach((dev) => {
 		variables.push({
 			name: `Device name (${dev.Name})`,
-			variableId: `device.${dev.uuid}.name`,
+			variableId: `device.${dev.Uuid}.name`,
 		})
 		variables.push({
 			name: `Device group (${dev.GroupName})`,
-			variableId: `device.${dev.uuid}.group`,
+			variableId: `device.${dev.Uuid}.group`,
 		})
 		variables.push({
 			name: `Device volume (${dev.GroupName})`,
-			variableId: `device.${dev.uuid}.volume`,
+			variableId: `device.${dev.Uuid}.volume`,
 		})
 	})
 

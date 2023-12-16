@@ -35,7 +35,7 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 	const devices = manager.Devices
 
 	const getDevice = (action: CompanionActionEvent): SonosDevice | undefined =>
-		manager.Devices.find((d) => d.uuid === action.options.device)
+		manager.Devices.find((d) => d.Uuid === action.options.device)
 
 	const getOptInt = (action: CompanionActionEvent, key: string): number => {
 		const val = Number(action.options[key])
