@@ -1,5 +1,5 @@
 import type { SonosDevice, SonosManager } from '@svrooij/sonos'
-import { DevicePicker, VolumePicker } from './choices.js'
+import { DevicePicker, MutedPicker, VolumePicker } from './choices.js'
 import type {
 	CompanionActionDefinitions,
 	CompanionActionEvent,
@@ -16,6 +16,7 @@ export enum ActionId {
 	PlayPause = 'play_pause',
 	NextTrack = 'next_track',
 	PreviousTrack = 'previous_track',
+	Mute = 'mute',
 	Volume = 'volume',
 	VolumeDelta = 'volume_delta',
 }
@@ -105,6 +106,27 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 			const device = getDevice(action)
 			if (device) {
 				await device.Previous().catch((e) => {
+					throw new Error(`Sonos: PreviousTrack failed: ${e}`)
+				})
+			}
+		},
+	}
+	actions[ActionId.Mute] = {
+		name: 'Set Muted',
+		options: [DevicePicker(devices), MutedPicker],
+		callback: async (action) => {
+			const device = getDevice(action)
+			if (device) {
+				let muted = action.options.muted === 'mute'
+				if (action.options.muted === 'toggle') {
+					muted = !device.Muted
+				}
+
+				await device.RenderingControlService.SetMute({
+					InstanceID: 0,
+					Channel: 'Master',
+					DesiredMute: muted,
+				}).catch((e) => {
 					throw new Error(`Sonos: PreviousTrack failed: ${e}`)
 				})
 			}

@@ -13,6 +13,7 @@ export enum FeedbackId {
 	Paused = 'paused',
 	Stopped = 'stopped',
 	Volume = 'volume',
+	Mute = 'mute',
 }
 
 export enum VolumeComparitor {
@@ -84,6 +85,20 @@ export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefini
 		callback: (event) => {
 			const device = getDevice(event)
 			return device?.CurrentTransportState === 'STOPPED'
+		},
+	}
+	feedbacks[FeedbackId.Mute] = {
+		name: 'Device muted',
+		type: 'boolean',
+		description: 'If the device is muted, change style of the bank',
+		options: [DevicePicker(devices)],
+		defaultStyle: {
+			color: combineRgb(255, 255, 255),
+			bgcolor: combineRgb(255, 0, 0),
+		},
+		callback: (event) => {
+			const device = getDevice(event)
+			return !!device?.Muted
 		},
 	}
 	feedbacks[FeedbackId.Volume] = {

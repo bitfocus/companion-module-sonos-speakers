@@ -1,6 +1,18 @@
 import type { CompanionInputFieldDropdown, CompanionInputFieldNumber } from '@companion-module/base'
 import type { SonosDevice } from '@svrooij/sonos'
 
+export const MutedPicker: CompanionInputFieldDropdown = {
+	type: 'dropdown',
+	label: 'Muted',
+	id: 'muted',
+	default: 'toggle',
+	choices: [
+		{ id: 'toggle', label: 'Toggle' },
+		{ id: 'mute', label: 'Mute' },
+		{ id: 'unmute', label: 'Unmute' },
+	],
+}
+
 export function DevicePicker(devices: SonosDevice[]): CompanionInputFieldDropdown {
 	const choices = devices.map((d) => ({
 		id: d.Uuid,

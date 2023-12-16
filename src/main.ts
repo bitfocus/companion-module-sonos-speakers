@@ -99,6 +99,9 @@ class ControllerInstance extends InstanceBase<DeviceConfig> {
 			this.checkFeedbacks(FeedbackId.Volume)
 			updateVariables(this, this.manager)
 		})
+		device.Events.on(SonosEvents.Mute, () => {
+			this.checkFeedbacks(FeedbackId.Mute)
+		})
 	}
 }
 

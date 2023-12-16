@@ -89,6 +89,44 @@ export function GetPresetsList(manager: SonosManager): CompanionPresetDefinition
 		presets[`volume_-5_${device.Uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, -5)
 		presets[`volume_-1_${device.Uuid}`] = VolumeDelta(device, ActionId.VolumeDelta, FeedbackId.Volume, -1)
 
+		presets[`mute_${device.Uuid}`] = {
+			category: 'Volume',
+			name: `${device.Name} Mute`,
+			type: 'button',
+			style: {
+				text: `${device.Name} Mute`,
+				size: 'auto',
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
+			},
+			feedbacks: [
+				{
+					feedbackId: FeedbackId.Mute,
+					style: {
+						color: combineRgb(255, 255, 255),
+						bgcolor: combineRgb(255, 0, 0),
+					},
+					options: {
+						device: device.Uuid,
+					},
+				},
+			],
+			steps: [
+				{
+					down: [
+						{
+							actionId: ActionId.Mute,
+							options: {
+								device: device.Uuid,
+								muted: 'toggle',
+							},
+						},
+					],
+					up: [],
+				},
+			],
+		}
+
 		presets[`play_pause_${device.Uuid}`] = {
 			category: 'Playback',
 			name: `${device.Name} Play/Pause`,
