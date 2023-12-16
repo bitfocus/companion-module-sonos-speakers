@@ -191,7 +191,6 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 		callback: async (action, context) => {
 			const streamUri = await context.parseVariablesInString(String(action.options.streamUri))
 			const streamMetadata = await context.parseVariablesInString(String(action.options.streamMetadata ?? ''))
-			console.log('try', streamUri, streamMetadata)
 			const device = getDevice(action)
 			if (device) {
 				if (streamMetadata) {
