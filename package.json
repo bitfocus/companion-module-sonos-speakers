@@ -22,15 +22,15 @@
 		]
 	},
 	"engines": {
-		"node": "^18"
+		"node": "^26"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.6",
+		"@companion-module/base": "~1.15.1",
 		"@svrooij/sonos": "^2.5.0"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^2.8.0",
-		"@types/node": "^18.19.3",
+		"@companion-module/tools": "^2.9.1",
+		"@types/node": "^26",
 		"rimraf": "^5.0.5",
 		"typescript": "~5.2"
 	},
