@@ -5,8 +5,17 @@ import {
 	type CompanionFeedbackBooleanEvent,
 	type CompanionFeedbackDefinitions,
 	type CompanionInputFieldDropdown,
-	type InputValue,
+	type JsonValue,
 } from '@companion-module/base'
+import type { ModuleTypes } from './types.js'
+
+// Values of the library's TransportState enum, which is not exported from the package root
+const TransportState = {
+	Playing: 'PLAYING',
+	Transitioning: 'TRANSITIONING',
+	Paused: 'PAUSED_PLAYBACK',
+	Stopped: 'STOPPED',
+} as const
 
 export enum FeedbackId {
 	Playing = 'playing',
@@ -37,8 +46,8 @@ function VolumeComparitorPicker(): CompanionInputFieldDropdown {
 	}
 }
 
-export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefinitions {
-	const feedbacks: CompanionFeedbackDefinitions = {}
+export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefinitions<ModuleTypes['feedbacks']> {
+	const feedbacks: CompanionFeedbackDefinitions<ModuleTypes['feedbacks']> = {}
 
 	const devices = manager.Devices
 
@@ -56,7 +65,10 @@ export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefini
 		},
 		callback: (event) => {
 			const device = getDevice(event)
-			return device?.CurrentTransportState === 'PLAYING' || device?.CurrentTransportState === 'TRANSITIONING'
+			return (
+				String(device?.CurrentTransportState) === TransportState.Playing ||
+				String(device?.CurrentTransportState) === TransportState.Transitioning
+			)
 		},
 	}
 	feedbacks[FeedbackId.Paused] = {
@@ -70,7 +82,7 @@ export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefini
 		},
 		callback: (event) => {
 			const device = getDevice(event)
-			return device?.CurrentTransportState === 'PAUSED_PLAYBACK'
+			return String(device?.CurrentTransportState) === TransportState.Paused
 		},
 	}
 	feedbacks[FeedbackId.Stopped] = {
@@ -84,7 +96,7 @@ export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefini
 		},
 		callback: (event) => {
 			const device = getDevice(event)
-			return device?.CurrentTransportState === 'STOPPED'
+			return String(device?.CurrentTransportState) === TransportState.Stopped
 		},
 	}
 	feedbacks[FeedbackId.Mute] = {
@@ -122,8 +134,8 @@ export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefini
 }
 
 function compareVolume(
-	target: InputValue | undefined,
-	comparitor: InputValue | undefined,
+	target: JsonValue | undefined,
+	comparitor: JsonValue | undefined,
 	currentValue: number,
 ): boolean {
 	const targetVolume = Number(target)

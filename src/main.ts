@@ -1,24 +1,19 @@
 import { SonosDevice, SonosEvents, SonosManager } from '@svrooij/sonos'
 import { GetActionsList } from './actions.js'
-import { DeviceConfig, GetConfigFields } from './config.js'
+import { type DeviceConfig, GetConfigFields } from './config.js'
 import { FeedbackId, GetFeedbacksList } from './feedback.js'
 import { GetPresetsList } from './presets.js'
-import { InitVariables, updateVariables } from './variables.js'
-import { InstanceBase, InstanceStatus, SomeCompanionConfigField, runEntrypoint } from '@companion-module/base'
-import { UpgradeScripts } from './upgrades.js'
+import { InitVariables, updateVariables, type Track, type TrackCache } from './variables.js'
+import { InstanceBase, InstanceStatus, type SomeCompanionConfigField } from '@companion-module/base'
+import type { ModuleTypes } from './types.js'
 
-class ControllerInstance extends InstanceBase<DeviceConfig> {
-	private readonly manager = new SonosManager()
-	private initDone = false
+export { UpgradeScripts } from './upgrades.js'
 
-	private config: DeviceConfig = {}
-
-	// Override base types to make types stricter
-	public checkFeedbacks(...feedbackTypes: FeedbackId[]): void {
-		if (this.initDone) {
-			super.checkFeedbacks(...feedbackTypes)
-		}
-	}
+export default class ControllerInstance extends InstanceBase<ModuleTypes> {
+	private manager = new SonosManager()
+	private readonly tracks: TrackCache = new Map()
+	/** Incremented on every (re)initialisation so stale async results can be ignored */
+	private generation = 0
 
 	/**
 	 * Main initialization function called once the module
@@ -32,38 +27,50 @@ class ControllerInstance extends InstanceBase<DeviceConfig> {
 	 * Process an updated configuration array.
 	 */
 	public async configUpdated(config: DeviceConfig): Promise<void> {
-		this.config = config
+		const generation = ++this.generation
 
 		this.updateStatus(InstanceStatus.Connecting)
 
-		try {
-			this.manager.CancelSubscription()
-		} catch (e) {
-			// Ignore
+		this.stopManager()
+		this.tracks.clear()
+		// Use a fresh manager, so event handlers of the previous one cannot fire into the new state
+		this.manager = new SonosManager()
+		const manager = this.manager
+
+		if (!config.host) {
+			this.updateStatus(InstanceStatus.BadConfig, 'No discovery IP configured')
+			return
 		}
 
-		this.initDone = false
-		this.manager
-			.InitializeFromDevice(this.config.host || '')
-			.then(() => {
-				this.updateStatus(InstanceStatus.Ok)
-				this.initDone = true
+		try {
+			await manager.InitializeFromDevice(config.host)
+		} catch (e) {
+			if (generation !== this.generation) return
 
-				// subscribe to events
-				this.manager.Devices.forEach((d) => this.subscribeEvents(d))
+			this.stopManager()
+			this.updateStatus(InstanceStatus.ConnectionFailure, `Load manager failed: ${e}`)
+			return
+		}
+		if (generation !== this.generation) {
+			// A newer configUpdated/destroy happened while we were connecting
+			try {
+				manager.CancelSubscription()
+			} catch {
+				// Ignore
+			}
+			return
+		}
 
-				InitVariables(this, this.manager)
-				this.setPresetDefinitions(GetPresetsList(this.manager))
-				this.setActionDefinitions(GetActionsList(this.manager))
-				this.setFeedbackDefinitions(GetFeedbacksList(this.manager))
+		this.updateStatus(InstanceStatus.Ok)
 
-				this.checkFeedbacks()
-			})
-			.catch((e) => {
-				this.manager.CancelSubscription()
+		manager.Devices.forEach((d) => this.subscribeEvents(d))
 
-				this.updateStatus(InstanceStatus.UnknownError, `Load manager failed: ${e}`)
-			})
+		InitVariables(this, manager, this.tracks)
+		this.setPresetDefinitions(...GetPresetsList(manager))
+		this.setActionDefinitions(GetActionsList(manager))
+		this.setFeedbackDefinitions(GetFeedbacksList(manager))
+
+		this.checkAllFeedbacks()
 	}
 
 	/**
@@ -77,35 +84,45 @@ class ControllerInstance extends InstanceBase<DeviceConfig> {
 	 * Clean up the instance before it is destroyed.
 	 */
 	public async destroy(): Promise<void> {
+		this.generation++
+		this.stopManager()
+	}
+
+	private stopManager(): void {
 		try {
-			// if (this.manager) {
 			this.manager.CancelSubscription()
-			// }
-		} catch (e) {
+		} catch {
 			// Ignore
 		}
 	}
 
 	private subscribeEvents(device: SonosDevice): void {
+		const refresh = (): void => updateVariables(this, this.manager, this.tracks)
+
 		device.Events.on(SonosEvents.CurrentTransportState, () => {
 			this.checkFeedbacks(FeedbackId.Playing, FeedbackId.Paused, FeedbackId.Stopped)
+			refresh()
 		})
 		device.Events.on(SonosEvents.GroupName, () => {
-			// this.checkFeedbacks(FeedbackId.GroupName) // TODO
-			this.setPresetDefinitions(GetPresetsList(this.manager))
-			updateVariables(this, this.manager)
+			this.setPresetDefinitions(...GetPresetsList(this.manager))
+			refresh()
 		})
 		device.Events.on(SonosEvents.Volume, () => {
 			this.checkFeedbacks(FeedbackId.Volume)
-			updateVariables(this, this.manager)
+			refresh()
 		})
 		device.Events.on(SonosEvents.Mute, () => {
 			this.checkFeedbacks(FeedbackId.Mute)
+			refresh()
 		})
-		device.Events.on(SonosEvents.CurrentTrackUri, () => {
-			updateVariables(this, this.manager)
+		device.Events.on(SonosEvents.CurrentTrackUri, refresh)
+		device.Events.on(SonosEvents.CurrentTrackMetadata, (track: Track | string) => {
+			if (typeof track === 'string') {
+				this.tracks.delete(device.Uuid)
+			} else {
+				this.tracks.set(device.Uuid, track)
+			}
+			refresh()
 		})
 	}
 }
-
-runEntrypoint(ControllerInstance, UpgradeScripts)

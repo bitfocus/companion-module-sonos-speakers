@@ -1,8 +1,7 @@
 import { Regex, type SomeCompanionConfigField } from '@companion-module/base'
 
-export interface DeviceConfig {
+export type DeviceConfig = {
 	host?: string
-	port?: string
 }
 
 export function GetConfigFields(): SomeCompanionConfigField[] {
