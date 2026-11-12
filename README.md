@@ -8,13 +8,13 @@ The module can be built once with `yarn build`. This should be enough to get the
 
 While developing the module, by using `yarn dev` the compiler will be run in watch mode to recompile the files on change.
 
-Package the module with `yarn package`. Requires Node 22 or newer.
+Package the module with `yarn package`. Requires Node 26.
 
 ## Changes
 
 ### v2.0.0
 
-- Update for Companion 5 (`@companion-module/base` 2.x), now running on Node 22
+- Update for Companion 5 (`@companion-module/base` 2.x), now running on Node 26
 - Update `@svrooij/sonos` to 2.7, TypeScript 6, ESLint 10 and the current Companion module tooling
 - Variables: `volume` is now a number (0-100) so it works in expressions; the old text form (e.g. `50%`) is available as `volume_text`
 - New variables per device: `muted`, `state`, `track_title`, `track_artist`, `track_album`
