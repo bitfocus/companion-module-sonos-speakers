@@ -48,8 +48,9 @@ export class DeviceStateStore {
 		else this.tracks.delete(uuid)
 	}
 
+	/** The track playing in the group the device is in, as stored for the group coordinator */
 	public track(device: SonosDevice): Track | undefined {
-		return this.tracks.get(device.Uuid)
+		return this.tracks.get(device.Coordinator.Uuid)
 	}
 
 	/** Store newly polled state, returns true when it differs from what was known before */
