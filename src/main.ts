@@ -18,6 +18,9 @@ import type { LibTrack } from './sonos-context.js'
 
 export { UpgradeScripts } from './upgrades.js'
 
+/** The event listener address which was detected automatically */
+let autoListenerHost: string | undefined
+
 export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 	private manager = new SonosManager()
 	private context: SonosContext | undefined
@@ -63,13 +66,7 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 		this.manager = new SonosManager()
 		const manager = this.manager
 
-		if (config.listenerHost && config.listenerHost !== LISTENER_AUTO) {
-			if (GetListenerChoices().some((c) => c.id === config.listenerHost)) {
-				SonosEventListener.DefaultInstance.UpdateSettings({ host: config.listenerHost })
-			} else {
-				this.log('warn', `Network interface ${config.listenerHost} no longer exists, detecting it automatically`)
-			}
-		}
+		this.applyListenerHost(config.listenerHost)
 
 		if (!config.host) {
 			this.updateStatus(InstanceStatus.BadConfig, 'No discovery IP configured')
@@ -131,6 +128,23 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 
 		this.checkAllFeedbacks()
 		this.startPolling(config.pollInterval ?? DEFAULT_POLL_INTERVAL, generation)
+	}
+
+	/** Choose the network interface the speakers send their updates to. The listener is shared by the whole process. */
+	private applyListenerHost(selected: string | undefined): void {
+		const listener = SonosEventListener.DefaultInstance
+		// Remember the automatically detected address before it is overridden, to go back to it
+		autoListenerHost ??= listener.GetStatus().host
+
+		let host = autoListenerHost
+		if (selected && selected !== LISTENER_AUTO) {
+			if (GetListenerChoices().some((c) => c.id === selected)) {
+				host = selected
+			} else {
+				this.log('warn', `Network interface ${selected} no longer exists, detecting it automatically`)
+			}
+		}
+		listener.UpdateSettings({ host })
 	}
 
 	private startPolling(intervalSeconds: number, generation: number): void {

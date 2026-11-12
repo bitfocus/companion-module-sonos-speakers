@@ -118,8 +118,13 @@ export class DeviceStateStore {
 
 	/** Shuffle and repeat state, from the play mode of the group the device is in */
 	public playMode(device: SonosDevice): PlayModeState | undefined {
-		const mode: string | undefined =
-			device.Coordinator.CurrentPlayMode ?? this.polled.get(device.Coordinator.Uuid)?.playMode
+		const coordinator = device.Coordinator
+		const mode = this.pick<string>(
+			coordinator.Uuid,
+			'transport',
+			coordinator.CurrentPlayMode,
+			this.polled.get(coordinator.Uuid)?.playMode,
+		)
 		if (!mode) return undefined
 
 		const shuffle = mode.startsWith('SHUFFLE')
