@@ -1,7 +1,13 @@
 import { SonosDevice, SonosEventListener, SonosEvents, SonosManager } from '@svrooij/sonos'
 import type { SonosContext } from './sonos-context.js'
 import { GetActionsList } from './actions.js'
-import { type DeviceConfig, DEFAULT_POLL_INTERVAL, GetConfigFields } from './config.js'
+import {
+	type DeviceConfig,
+	DEFAULT_POLL_INTERVAL,
+	GetConfigFields,
+	GetListenerChoices,
+	LISTENER_AUTO,
+} from './config.js'
 import { DeviceStateStore, pollDevices, type Track } from './device-state.js'
 import { FeedbackId, GetFeedbacksList } from './feedback.js'
 import { GetPresetsList } from './presets.js'
@@ -45,8 +51,12 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 		this.manager = new SonosManager()
 		const manager = this.manager
 
-		if (config.listenerHost) {
-			SonosEventListener.DefaultInstance.UpdateSettings({ host: config.listenerHost })
+		if (config.listenerHost && config.listenerHost !== LISTENER_AUTO) {
+			if (GetListenerChoices().some((c) => c.id === config.listenerHost)) {
+				SonosEventListener.DefaultInstance.UpdateSettings({ host: config.listenerHost })
+			} else {
+				this.log('warn', `Network interface ${config.listenerHost} no longer exists, detecting it automatically`)
+			}
 		}
 
 		if (!config.host) {

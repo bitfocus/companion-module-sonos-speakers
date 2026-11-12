@@ -28,6 +28,6 @@ Variables can be used in expressions and in action options, for example to build
 
 **Notes**
 
-- Speakers push changes to Companion, which can be blocked by a firewall or by picking the wrong network connection. The module also reads the status of the speakers every few seconds (see _Status refresh interval_), and logs a warning when updates are not arriving. If this computer has several network connections, set _Event listener IP_ to the one on the same network as the speakers.
+- Speakers push changes to Companion, which can be blocked by a firewall or by picking the wrong network connection. The module also reads the status of the speakers every few seconds (see _Status refresh interval_), and logs a warning when updates are not arriving. If this computer has several network connections, set _Network interface for speaker updates_ to the one on the same network as the speakers.
 - Commands for a speaker which is part of a group (play, pause, seek, queue, favourites) are sent to the group coordinator.
 - Playing a favourite which is an album or playlist replaces the queue, like it does in the Sonos app.

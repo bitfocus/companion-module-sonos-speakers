@@ -1,3 +1,4 @@
+import { networkInterfaces } from 'node:os'
 import { Regex, type SomeCompanionConfigField } from '@companion-module/base'
 
 export type DeviceConfig = {
@@ -7,6 +8,22 @@ export type DeviceConfig = {
 }
 
 export const DEFAULT_POLL_INTERVAL = 5
+
+/** Value of the event listener dropdown which means: work out the address automatically */
+export const LISTENER_AUTO = 'auto'
+
+/** The IPv4 addresses of the network interfaces of this computer */
+export function GetListenerChoices(): { id: string; label: string }[] {
+	const choices = [{ id: LISTENER_AUTO, label: 'Automatic' }]
+	for (const [name, addresses] of Object.entries(networkInterfaces())) {
+		for (const address of addresses ?? []) {
+			if (address.family === 'IPv4' && !address.internal) {
+				choices.push({ id: address.address, label: `${address.address} (${name})` })
+			}
+		}
+	}
+	return choices
+}
 
 export function GetConfigFields(): SomeCompanionConfigField[] {
 	return [
@@ -30,13 +47,14 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			asInteger: true,
 		},
 		{
-			type: 'textinput',
+			type: 'dropdown',
 			id: 'listenerHost',
-			label: 'Event listener IP (optional)',
+			label: 'Network interface for speaker updates',
 			description:
-				"The IP address of this computer that the speakers should send their updates to. Leave empty to detect it automatically, and set it if this computer has several network connections (VPN, virtual adapters) and updates don't arrive.",
+				"The network connection of this computer that the speakers send their updates to. Leave on Automatic unless this computer has several network connections (VPN, virtual adapters) and updates don't arrive.",
 			width: 6,
-			regex: '/^$|^(\\d{1,3}\\.){3}\\d{1,3}$/',
+			default: LISTENER_AUTO,
+			choices: GetListenerChoices(),
 		},
 	]
 }
