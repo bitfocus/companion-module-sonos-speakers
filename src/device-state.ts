@@ -33,10 +33,14 @@ interface PolledDeviceState {
 export class DeviceStateStore {
 	private readonly polled = new Map<string, PolledDeviceState>()
 	private readonly tracks = new Map<string, Track>()
+	private readonly polledAt = new Map<string, number>()
+	private readonly eventAt = new Map<string, number>()
 
 	public clear(): void {
 		this.polled.clear()
 		this.tracks.clear()
+		this.polledAt.clear()
+		this.eventAt.clear()
 	}
 
 	public setTrack(uuid: string, track: Track | undefined): void {
@@ -50,16 +54,41 @@ export class DeviceStateStore {
 
 	/** Store newly polled state, returns true when it differs from what was known before */
 	public setPolled(uuid: string, state: PolledDeviceState): boolean {
+		this.polledAt.set(uuid, Date.now())
 		const changed = JSON.stringify(this.polled.get(uuid)) !== JSON.stringify(state)
 		this.polled.set(uuid, state)
 		return changed
+	}
+
+	/** Record that a speaker event has just updated the state of the device */
+	public noteEvent(uuid: string, kind: 'transport' | 'rendering'): void {
+		this.eventAt.set(`${uuid}:${kind}`, Date.now())
+	}
+
+	/**
+	 * Whether the value cached from speaker events is at least as recent as the polled value.
+	 * If events stop arriving, the polled value takes over rather than the cache going stale.
+	 */
+	private eventIsFresher(uuid: string, kind: 'transport' | 'rendering'): boolean {
+		return (this.eventAt.get(`${uuid}:${kind}`) ?? 0) >= (this.polledAt.get(uuid) ?? 0)
+	}
+
+	private pick<T>(
+		uuid: string,
+		kind: 'transport' | 'rendering',
+		fromEvents: T | undefined,
+		polled: T | undefined,
+	): T | undefined {
+		if (polled === undefined) return fromEvents
+		if (fromEvents === undefined) return polled
+		return this.eventIsFresher(uuid, kind) ? fromEvents : polled
 	}
 
 	public volume(device: SonosDevice): number | undefined {
 		const polled = this.polled.get(device.Uuid)
 		// Speakers with a fixed volume (Connect, Port) always output at full volume
 		if (polled?.fixedVolume) return 100
-		return device.Volume ?? polled?.volume
+		return this.pick(device.Uuid, 'rendering', device.Volume, polled?.volume)
 	}
 
 	public isFixedVolume(device: SonosDevice): boolean {
@@ -67,17 +96,24 @@ export class DeviceStateStore {
 	}
 
 	public muted(device: SonosDevice): boolean | undefined {
-		return device.Muted ?? this.polled.get(device.Uuid)?.muted
+		return this.pick(device.Uuid, 'rendering', device.Muted, this.polled.get(device.Uuid)?.muted)
 	}
 
 	/** The transport state of the group the device is in, eg PLAYING */
 	public transportState(device: SonosDevice): string | undefined {
-		const state: string | undefined = device.Coordinator.CurrentTransportState
-		return state ?? this.polled.get(device.Coordinator.Uuid)?.transportState
+		const coordinator = device.Coordinator
+		const state: string | undefined = coordinator.CurrentTransportState
+		return this.pick(coordinator.Uuid, 'transport', state, this.polled.get(coordinator.Uuid)?.transportState)
 	}
 
 	public trackUri(device: SonosDevice): string | undefined {
-		return device.Coordinator.CurrentTrackUri ?? this.polled.get(device.Coordinator.Uuid)?.trackUri
+		const coordinator = device.Coordinator
+		return this.pick(
+			coordinator.Uuid,
+			'transport',
+			coordinator.CurrentTrackUri,
+			this.polled.get(coordinator.Uuid)?.trackUri,
+		)
 	}
 
 	/** Shuffle and repeat state, from the play mode of the group the device is in */

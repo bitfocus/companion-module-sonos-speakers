@@ -14,6 +14,10 @@ const STREAM_URI_PREFIXES = [
 	'x-rincon-mp3radio:',
 	'aac:',
 	'hls-radio:',
+	'pndrradio:',
+	'x-rincon-stream:',
+	'x-sonos-htastream:',
+	'x-sonosapi-vli:',
 ]
 
 function isStreamUri(uri: string): boolean {

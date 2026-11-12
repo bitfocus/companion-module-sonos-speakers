@@ -32,13 +32,25 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 	 * is OK to start doing things.
 	 */
 	public async init(config: DeviceConfig): Promise<void> {
-		await this.configUpdated(config)
+		// Discovery can take a while, so connect in the background instead of delaying the startup of the module
+		this.startConnecting(config)
 	}
 
 	/**
 	 * Process an updated configuration array.
 	 */
 	public async configUpdated(config: DeviceConfig): Promise<void> {
+		this.startConnecting(config)
+	}
+
+	private startConnecting(config: DeviceConfig): void {
+		this.connect(config).catch((e) => {
+			this.log('error', `Failed to connect: ${e}`)
+			this.updateStatus(InstanceStatus.UnknownError, `Failed to connect: ${e}`)
+		})
+	}
+
+	private async connect(config: DeviceConfig): Promise<void> {
 		const generation = ++this.generation
 
 		this.updateStatus(InstanceStatus.Connecting)
@@ -191,8 +203,11 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 
 	private subscribeEvents(device: SonosDevice): void {
 		const refresh = (): void => updateVariables(this, this.manager, this.state)
+		const onTransport = (): void => this.state.noteEvent(device.Uuid, 'transport')
+		const onRendering = (): void => this.state.noteEvent(device.Uuid, 'rendering')
 
 		device.Events.on(SonosEvents.CurrentTransportState, () => {
+			onTransport()
 			this.checkFeedbacks(FeedbackId.Playing, FeedbackId.Paused, FeedbackId.Stopped)
 			refresh()
 		})
@@ -207,14 +222,17 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 		})
 		// Fired for any AVTransport change, which includes changes of the play mode (repeat and shuffle)
 		device.Events.on(SonosEvents.AVTransport, () => {
+			onTransport()
 			refresh()
 			this.checkFeedbacks(FeedbackId.Repeat, FeedbackId.Shuffle)
 		})
 		device.Events.on(SonosEvents.Volume, () => {
+			onRendering()
 			this.checkFeedbacks(FeedbackId.Volume)
 			refresh()
 		})
 		device.Events.on(SonosEvents.Mute, () => {
+			onRendering()
 			this.checkFeedbacks(FeedbackId.Mute)
 			refresh()
 		})
@@ -228,8 +246,12 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 				`Speaker updates from ${device.Name} are not reaching Companion (${message}). The status is refreshed by polling instead. Check the firewall, or set the event listener IP in the module settings.`,
 			)
 		})
-		device.Events.on(SonosEvents.CurrentTrackUri, refresh)
+		device.Events.on(SonosEvents.CurrentTrackUri, () => {
+			onTransport()
+			refresh()
+		})
 		device.Events.on(SonosEvents.CurrentTrackMetadata, (track: Track | string) => {
+			onTransport()
 			this.state.setTrack(device.Uuid, typeof track === 'string' ? undefined : track)
 			refresh()
 		})
