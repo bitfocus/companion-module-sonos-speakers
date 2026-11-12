@@ -1,26 +1,17 @@
-import type { SonosDevice, SonosManager } from '@svrooij/sonos'
+import type { SonosDevice } from '@svrooij/sonos'
+import { ActionId, PlayPauseToggle } from './action-ids.js'
+import { GetEqActions } from './actions-eq.js'
+import { GetGroupActions } from './actions-groups.js'
+import { GetLibraryActions } from './actions-library.js'
+import { GetPlaybackActions } from './actions-playback.js'
+import type { SonosContext } from './sonos-context.js'
 import { DevicePicker, MutedPicker, VolumePicker } from './choices.js'
 import type {
 	CompanionActionDefinitions,
 	CompanionActionEvent,
 	CompanionInputFieldNumber,
 } from '@companion-module/base'
-
-export enum PlayPauseToggle {
-	Play = 'play',
-	Pause = 'pause',
-	Toggle = 'toggle',
-}
-
-export enum ActionId {
-	PlayPause = 'play_pause',
-	NextTrack = 'next_track',
-	PreviousTrack = 'previous_track',
-	Mute = 'mute',
-	Volume = 'volume',
-	VolumeDelta = 'volume_delta',
-	LoadStreamUri = 'load_stream_uri',
-}
+import type { ModuleTypes } from './types.js'
 
 function VolumeDeltaPicker(): CompanionInputFieldNumber {
 	return {
@@ -33,7 +24,10 @@ function VolumeDeltaPicker(): CompanionInputFieldNumber {
 	}
 }
 
-export function GetActionsList(manager: SonosManager): CompanionActionDefinitions {
+export { ActionId, PlayPauseToggle }
+
+export function GetActionsList(ctx: SonosContext): CompanionActionDefinitions<ModuleTypes['actions']> {
+	const manager = ctx.manager
 	const devices = manager.Devices
 
 	const getDevice = (action: CompanionActionEvent): SonosDevice | undefined =>
@@ -47,7 +41,12 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 		return val
 	}
 
-	const actions: CompanionActionDefinitions = {}
+	const optString = (action: CompanionActionEvent, key: string): string => {
+		const val = action.options[key]
+		return typeof val === 'string' ? val : ''
+	}
+
+	const actions: CompanionActionDefinitions<ModuleTypes['actions']> = {}
 
 	actions[ActionId.PlayPause] = {
 		name: 'Play/pause',
@@ -128,7 +127,7 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 					Channel: 'Master',
 					DesiredMute: muted,
 				}).catch((e) => {
-					throw new Error(`Sonos: PreviousTrack failed: ${e}`)
+					throw new Error(`Sonos: Set muted failed: ${e}`)
 				})
 			}
 		},
@@ -140,7 +139,7 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 			const device = getDevice(action)
 			if (device) {
 				await device.SetVolume(getOptInt(action, 'volume')).catch((e) => {
-					throw new Error(`Sonos: PreviousTrack failed: ${e}`)
+					throw new Error(`Sonos: Set volume failed: ${e}`)
 				})
 			}
 		},
@@ -152,7 +151,7 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 			const device = getDevice(action)
 			if (device) {
 				await device.SetRelativeVolume(getOptInt(action, 'delta')).catch((e) => {
-					throw new Error(`Sonos: PreviousTrack failed: ${e}`)
+					throw new Error(`Sonos: Adjust volume failed: ${e}`)
 				})
 			}
 		},
@@ -188,9 +187,9 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 				default: true,
 			},
 		],
-		callback: async (action, context) => {
-			const streamUri = await context.parseVariablesInString(String(action.options.streamUri))
-			const streamMetadata = await context.parseVariablesInString(String(action.options.streamMetadata ?? ''))
+		callback: async (action) => {
+			const streamUri = optString(action, 'streamUri')
+			const streamMetadata = optString(action, 'streamMetadata')
 			const device = getDevice(action)
 			if (device) {
 				if (streamMetadata) {
@@ -198,6 +197,8 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 						InstanceID: 0,
 						CurrentURI: streamUri,
 						CurrentURIMetaData: streamMetadata,
+					}).catch((e) => {
+						throw new Error(`Sonos: LoadStreamUri failed: ${e}`)
 					})
 				} else {
 					await device.SetAVTransportURI(streamUri).catch((e) => {
@@ -206,11 +207,19 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 				}
 
 				if (action.options.autoplay) {
-					await device.Play()
+					await device.Play().catch((e) => {
+						throw new Error(`Sonos: Play failed: ${e}`)
+					})
 				}
 			}
 		},
 	}
 
-	return actions
+	return {
+		...actions,
+		...GetPlaybackActions(ctx),
+		...GetLibraryActions(ctx),
+		...GetGroupActions(ctx),
+		...GetEqActions(ctx),
+	}
 }
