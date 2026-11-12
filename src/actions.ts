@@ -1,4 +1,10 @@
-import type { SonosDevice, SonosManager } from '@svrooij/sonos'
+import type { SonosDevice } from '@svrooij/sonos'
+import { ActionId, PlayPauseToggle } from './action-ids.js'
+import { GetEqActions } from './actions-eq.js'
+import { GetGroupActions } from './actions-groups.js'
+import { GetLibraryActions } from './actions-library.js'
+import { GetPlaybackActions } from './actions-playback.js'
+import type { SonosContext } from './sonos-context.js'
 import { DevicePicker, MutedPicker, VolumePicker } from './choices.js'
 import type {
 	CompanionActionDefinitions,
@@ -6,22 +12,6 @@ import type {
 	CompanionInputFieldNumber,
 } from '@companion-module/base'
 import type { ModuleTypes } from './types.js'
-
-export enum PlayPauseToggle {
-	Play = 'play',
-	Pause = 'pause',
-	Toggle = 'toggle',
-}
-
-export enum ActionId {
-	PlayPause = 'play_pause',
-	NextTrack = 'next_track',
-	PreviousTrack = 'previous_track',
-	Mute = 'mute',
-	Volume = 'volume',
-	VolumeDelta = 'volume_delta',
-	LoadStreamUri = 'load_stream_uri',
-}
 
 function VolumeDeltaPicker(): CompanionInputFieldNumber {
 	return {
@@ -34,7 +24,10 @@ function VolumeDeltaPicker(): CompanionInputFieldNumber {
 	}
 }
 
-export function GetActionsList(manager: SonosManager): CompanionActionDefinitions<ModuleTypes['actions']> {
+export { ActionId, PlayPauseToggle }
+
+export function GetActionsList(ctx: SonosContext): CompanionActionDefinitions<ModuleTypes['actions']> {
+	const manager = ctx.manager
 	const devices = manager.Devices
 
 	const getDevice = (action: CompanionActionEvent): SonosDevice | undefined =>
@@ -222,5 +215,11 @@ export function GetActionsList(manager: SonosManager): CompanionActionDefinition
 		},
 	}
 
-	return actions
+	return {
+		...actions,
+		...GetPlaybackActions(ctx),
+		...GetLibraryActions(ctx),
+		...GetGroupActions(ctx),
+		...GetEqActions(ctx),
+	}
 }

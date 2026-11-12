@@ -1,4 +1,6 @@
-import type { SonosDevice, SonosManager } from '@svrooij/sonos'
+import type { SonosDevice } from '@svrooij/sonos'
+import { getGroupMembers, getPlayModeState } from './device-state.js'
+import type { SonosContext } from './sonos-context.js'
 import { DevicePicker, VolumePicker } from './choices.js'
 import {
 	combineRgb,
@@ -23,6 +25,10 @@ export enum FeedbackId {
 	Stopped = 'stopped',
 	Volume = 'volume',
 	Mute = 'mute',
+	Repeat = 'repeat',
+	Shuffle = 'shuffle',
+	Grouped = 'grouped',
+	Coordinator = 'coordinator',
 }
 
 export enum VolumeComparitor {
@@ -46,9 +52,10 @@ function VolumeComparitorPicker(): CompanionInputFieldDropdown {
 	}
 }
 
-export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefinitions<ModuleTypes['feedbacks']> {
+export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinitions<ModuleTypes['feedbacks']> {
 	const feedbacks: CompanionFeedbackDefinitions<ModuleTypes['feedbacks']> = {}
 
+	const manager = ctx.manager
 	const devices = manager.Devices
 
 	const getDevice = (event: CompanionFeedbackBooleanEvent): SonosDevice | undefined =>
@@ -127,6 +134,75 @@ export function GetFeedbacksList(manager: SonosManager): CompanionFeedbackDefini
 			return (
 				device?.Volume !== undefined && compareVolume(event.options.volume, event.options.comparitor, device?.Volume)
 			)
+		},
+	}
+
+	feedbacks[FeedbackId.Repeat] = {
+		name: 'Device repeat mode',
+		type: 'boolean',
+		description: 'If the device has the chosen repeat mode, change style of the button',
+		options: [
+			DevicePicker(devices),
+			{
+				type: 'dropdown',
+				label: 'Repeat mode',
+				id: 'mode',
+				default: 'all',
+				choices: [
+					{ id: 'off', label: 'Off' },
+					{ id: 'all', label: 'Repeat all' },
+					{ id: 'one', label: 'Repeat one' },
+				],
+			},
+		],
+		defaultStyle: {
+			color: combineRgb(0, 0, 0),
+			bgcolor: combineRgb(0, 255, 0),
+		},
+		callback: (event) => {
+			const device = getDevice(event)
+			return !!device && getPlayModeState(device)?.repeat === event.options.mode
+		},
+	}
+	feedbacks[FeedbackId.Shuffle] = {
+		name: 'Device shuffle',
+		type: 'boolean',
+		description: 'If shuffle is on, change style of the button',
+		options: [DevicePicker(devices)],
+		defaultStyle: {
+			color: combineRgb(0, 0, 0),
+			bgcolor: combineRgb(0, 255, 0),
+		},
+		callback: (event) => {
+			const device = getDevice(event)
+			return !!device && !!getPlayModeState(device)?.shuffle
+		},
+	}
+	feedbacks[FeedbackId.Grouped] = {
+		name: 'Device grouped',
+		type: 'boolean',
+		description: 'If the device is grouped with other speakers, change style of the button',
+		options: [DevicePicker(devices)],
+		defaultStyle: {
+			color: combineRgb(0, 0, 0),
+			bgcolor: combineRgb(0, 200, 255),
+		},
+		callback: (event) => {
+			const device = getDevice(event)
+			return !!device && getGroupMembers(manager, device).length > 1
+		},
+	}
+	feedbacks[FeedbackId.Coordinator] = {
+		name: 'Device is group coordinator',
+		type: 'boolean',
+		description: 'If the device is the coordinator of its group (the one which is playing), change style of the button',
+		options: [DevicePicker(devices)],
+		defaultStyle: {
+			color: combineRgb(0, 0, 0),
+			bgcolor: combineRgb(255, 165, 0),
+		},
+		callback: (event) => {
+			return !!getDevice(event)?.IsCoordinator
 		},
 	}
 

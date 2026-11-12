@@ -13,7 +13,7 @@ export const MutedPicker: CompanionInputFieldDropdown = {
 	],
 }
 
-export function DevicePicker(devices: SonosDevice[]): CompanionInputFieldDropdown {
+export function DevicePicker(devices: SonosDevice[], id = 'device', label = 'Device'): CompanionInputFieldDropdown {
 	const choices = devices.map((d) => ({
 		id: d.Uuid,
 		label: d.Name,
@@ -21,8 +21,8 @@ export function DevicePicker(devices: SonosDevice[]): CompanionInputFieldDropdow
 
 	return {
 		type: 'dropdown',
-		label: 'Device',
-		id: 'device',
+		label,
+		id,
 		default: choices.length ? choices[0].id : '',
 		choices,
 	}
