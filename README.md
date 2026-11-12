@@ -25,6 +25,8 @@ Package the module with `yarn package`. Requires Node 26.
 - New EQ and home theatre actions: bass, treble, loudness, balance, night mode, speech enhancement, subwoofer enable/gain, surround enable/levels/music mode, and volume ramp
 - New feedbacks: repeat mode, shuffle, grouped and group coordinator
 - Presets are now grouped per device (playback, volume, grouping), with next/previous/stop/repeat/shuffle/sleep presets, and presets for each favourite and radio station
+- Status is now also read directly from the speakers every few seconds (configurable), so variables and feedbacks work even when the speakers' own updates cannot reach Companion. New optional setting for the event listener IP, and a `volume_fixed` variable (fixed-volume speakers report 100)
+- Presets are registered after actions and feedbacks, so they no longer reference unknown definitions
 - Many of these were inspired by [SoCo-CLI](https://github.com/avantrec/soco-cli). Subwoofer, surround, balance and alarm actions depend on the speaker model and have had little real-world testing
 - Fix volume +/- presets not being tied to their device
 - Fix copy-pasted error messages in actions, and report failures of the load stream action

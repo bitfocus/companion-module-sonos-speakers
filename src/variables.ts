@@ -1,40 +1,35 @@
 import type { SonosManager } from '@svrooij/sonos'
 import type { CompanionVariableDefinitions, CompanionVariableValues, InstanceBase } from '@companion-module/base'
-import { getGroupMembers, getPlayModeState } from './device-state.js'
+import { getGroupMembers, type DeviceStateStore } from './device-state.js'
 import type { ModuleTypes } from './types.js'
 
-/** The subset of the library's track metadata used by this module */
-export interface Track {
-	Title?: string
-	Artist?: string
-	Album?: string
-	AlbumArtUri?: string
-}
-
-/** Latest track metadata for each device, keyed by device uuid */
-export type TrackCache = Map<string, Track>
-
-export function updateVariables(instance: InstanceBase<ModuleTypes>, manager: SonosManager, tracks: TrackCache): void {
+export function updateVariables(
+	instance: InstanceBase<ModuleTypes>,
+	manager: SonosManager,
+	state: DeviceStateStore,
+): void {
 	const newValues: CompanionVariableValues = {}
 
 	manager.Devices.forEach((dev) => {
-		const track = tracks.get(dev.Uuid)
+		const track = state.track(dev)
 		const prefix = `device.${dev.Uuid}`
 
 		newValues[`${prefix}.name`] = dev.Name
 		newValues[`${prefix}.group`] = dev.GroupName || ''
 		// `volume` is numeric so it can be used in expressions. `volume_text` is for display on buttons.
-		newValues[`${prefix}.volume`] = dev.Volume
-		newValues[`${prefix}.volume_text`] = dev.Volume === undefined ? '-' : `${dev.Volume}%`
-		newValues[`${prefix}.muted`] = dev.Muted ?? false
-		newValues[`${prefix}.state`] = dev.CurrentTransportStateSimple ?? ''
-		newValues[`${prefix}.streamUri`] = dev.CurrentTrackUri ?? ''
+		const volume = state.volume(dev)
+		newValues[`${prefix}.volume`] = volume
+		newValues[`${prefix}.volume_text`] = volume === undefined ? '-' : `${volume}%`
+		newValues[`${prefix}.volume_fixed`] = state.isFixedVolume(dev)
+		newValues[`${prefix}.muted`] = state.muted(dev) ?? false
+		newValues[`${prefix}.state`] = state.transportState(dev) ?? ''
+		newValues[`${prefix}.streamUri`] = state.trackUri(dev) ?? ''
 		newValues[`${prefix}.track_title`] = track?.Title ?? ''
 		newValues[`${prefix}.track_artist`] = track?.Artist ?? ''
 		newValues[`${prefix}.track_album`] = track?.Album ?? ''
 		newValues[`${prefix}.album_art`] = track?.AlbumArtUri ?? ''
 
-		const playMode = getPlayModeState(dev)
+		const playMode = state.playMode(dev)
 		newValues[`${prefix}.repeat`] = playMode?.repeat ?? ''
 		newValues[`${prefix}.shuffle`] = playMode?.shuffle ?? false
 		newValues[`${prefix}.is_coordinator`] = dev.IsCoordinator
@@ -46,7 +41,11 @@ export function updateVariables(instance: InstanceBase<ModuleTypes>, manager: So
 	instance.setVariableValues(newValues)
 }
 
-export function InitVariables(instance: InstanceBase<ModuleTypes>, manager: SonosManager, tracks: TrackCache): void {
+export function InitVariables(
+	instance: InstanceBase<ModuleTypes>,
+	manager: SonosManager,
+	state: DeviceStateStore,
+): void {
 	const variables: CompanionVariableDefinitions = {}
 
 	manager.Devices.forEach((dev) => {
@@ -55,9 +54,10 @@ export function InitVariables(instance: InstanceBase<ModuleTypes>, manager: Sono
 		variables[`${prefix}.group`] = { name: `Device group (${dev.Name})` }
 		variables[`${prefix}.volume`] = { name: `Device volume, number 0-100 (${dev.Name})` }
 		variables[`${prefix}.volume_text`] = { name: `Device volume as text, e.g. 50% (${dev.Name})` }
+		variables[`${prefix}.volume_fixed`] = { name: `Device has a fixed volume (${dev.Name})` }
 		variables[`${prefix}.muted`] = { name: `Device muted (${dev.Name})` }
 		variables[`${prefix}.state`] = {
-			name: `Device playback state: e.g. PLAYING, PAUSED_PLAYBACK, STOPPED (${dev.Name})`,
+			name: `Device playback state: e.g. PLAYING, PAUSED_PLAYBACK, STOPPED, TRANSITIONING (${dev.Name})`,
 		}
 		variables[`${prefix}.streamUri`] = { name: `Device stream URI (${dev.Name})` }
 		variables[`${prefix}.track_title`] = { name: `Current track title (${dev.Name})` }
@@ -71,5 +71,5 @@ export function InitVariables(instance: InstanceBase<ModuleTypes>, manager: Sono
 	})
 
 	instance.setVariableDefinitions(variables)
-	updateVariables(instance, manager, tracks)
+	updateVariables(instance, manager, state)
 }

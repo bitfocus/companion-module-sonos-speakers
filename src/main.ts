@@ -1,10 +1,11 @@
-import { SonosDevice, SonosEvents, SonosManager } from '@svrooij/sonos'
+import { SonosDevice, SonosEventListener, SonosEvents, SonosManager } from '@svrooij/sonos'
 import type { SonosContext } from './sonos-context.js'
 import { GetActionsList } from './actions.js'
-import { type DeviceConfig, GetConfigFields } from './config.js'
+import { type DeviceConfig, DEFAULT_POLL_INTERVAL, GetConfigFields } from './config.js'
+import { DeviceStateStore, pollDevices, type Track } from './device-state.js'
 import { FeedbackId, GetFeedbacksList } from './feedback.js'
 import { GetPresetsList } from './presets.js'
-import { InitVariables, updateVariables, type Track, type TrackCache } from './variables.js'
+import { InitVariables, updateVariables } from './variables.js'
 import { InstanceBase, InstanceStatus, type SomeCompanionConfigField } from '@companion-module/base'
 import type { ModuleTypes } from './types.js'
 import type { LibTrack } from './sonos-context.js'
@@ -14,7 +15,9 @@ export { UpgradeScripts } from './upgrades.js'
 export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 	private manager = new SonosManager()
 	private context: SonosContext | undefined
-	private readonly tracks: TrackCache = new Map()
+	private readonly state = new DeviceStateStore()
+	private pollTimer: NodeJS.Timeout | undefined
+	private readonly reportedSubscriptionErrors = new Set<string>()
 	/** Incremented on every (re)initialisation so stale async results can be ignored */
 	private generation = 0
 
@@ -35,11 +38,16 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 		this.updateStatus(InstanceStatus.Connecting)
 
 		this.stopManager()
-		this.tracks.clear()
+		this.state.clear()
+		this.reportedSubscriptionErrors.clear()
 		this.context = undefined
 		// Use a fresh manager, so event handlers of the previous one cannot fire into the new state
 		this.manager = new SonosManager()
 		const manager = this.manager
+
+		if (config.listenerHost) {
+			SonosEventListener.DefaultInstance.UpdateSettings({ host: config.listenerHost })
+		}
 
 		if (!config.host) {
 			this.updateStatus(InstanceStatus.BadConfig, 'No discovery IP configured')
@@ -67,10 +75,17 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 
 		this.updateStatus(InstanceStatus.Ok)
 
+		// Read the current state of the speakers, as events only report changes
+		await pollDevices(manager, this.state).catch((e) => this.log('warn', `Failed to read speaker status: ${e}`))
+		if (generation !== this.generation) return
+
 		manager.Devices.forEach((d) => this.subscribeEvents(d))
+		const listener = SonosEventListener.DefaultInstance.GetStatus()
+		this.log('info', `Listening for speaker updates on ${listener.host}:${listener.port}`)
 
 		const ctx: SonosContext = {
 			manager,
+			state: this.state,
 			favourites: [],
 			radioStations: [],
 			alarms: [],
@@ -78,20 +93,43 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 				if (generation !== this.generation) return
 				await this.loadLists(ctx)
 				if (generation !== this.generation) return
-				this.setPresetDefinitions(...GetPresetsList(ctx))
 				this.setActionDefinitions(GetActionsList(ctx))
+				this.setPresetDefinitions(...GetPresetsList(ctx))
 			},
 		}
 		this.context = ctx
 		await this.loadLists(ctx)
 		if (generation !== this.generation) return
 
-		InitVariables(this, manager, this.tracks)
-		this.setPresetDefinitions(...GetPresetsList(ctx))
+		InitVariables(this, manager, this.state)
+		// Presets reference actions and feedbacks, so those need to be defined first
 		this.setActionDefinitions(GetActionsList(ctx))
 		this.setFeedbackDefinitions(GetFeedbacksList(ctx))
+		this.setPresetDefinitions(...GetPresetsList(ctx))
 
 		this.checkAllFeedbacks()
+		this.startPolling(config.pollInterval ?? DEFAULT_POLL_INTERVAL, generation)
+	}
+
+	private startPolling(intervalSeconds: number, generation: number): void {
+		if (!(intervalSeconds > 0)) return
+
+		let running = false
+		this.pollTimer = setInterval(() => {
+			if (running || generation !== this.generation) return
+			running = true
+			pollDevices(this.manager, this.state)
+				.then((changed) => {
+					if (changed && generation === this.generation) {
+						updateVariables(this, this.manager, this.state)
+						this.checkAllFeedbacks()
+					}
+				})
+				.catch((e) => this.log('debug', `Failed to read speaker status: ${e}`))
+				.finally(() => {
+					running = false
+				})
+		}, intervalSeconds * 1000)
 	}
 
 	/** Load the favourites, radio stations and alarms. Failing to load these should not stop the module working. */
@@ -130,6 +168,10 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 	}
 
 	private stopManager(): void {
+		if (this.pollTimer) {
+			clearInterval(this.pollTimer)
+			this.pollTimer = undefined
+		}
 		try {
 			this.manager.CancelSubscription()
 		} catch {
@@ -138,7 +180,7 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 	}
 
 	private subscribeEvents(device: SonosDevice): void {
-		const refresh = (): void => updateVariables(this, this.manager, this.tracks)
+		const refresh = (): void => updateVariables(this, this.manager, this.state)
 
 		device.Events.on(SonosEvents.CurrentTransportState, () => {
 			this.checkFeedbacks(FeedbackId.Playing, FeedbackId.Paused, FeedbackId.Stopped)
@@ -166,13 +208,19 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 			this.checkFeedbacks(FeedbackId.Mute)
 			refresh()
 		})
+		device.Events.on(SonosEvents.SubscriptionError, (e: unknown) => {
+			// Only report each distinct problem once, as it would otherwise repeat on every retry
+			const message = e instanceof Error ? e.message : String(e)
+			if (this.reportedSubscriptionErrors.has(message)) return
+			this.reportedSubscriptionErrors.add(message)
+			this.log(
+				'warn',
+				`Speaker updates from ${device.Name} are not reaching Companion (${message}). The status is refreshed by polling instead. Check the firewall, or set the event listener IP in the module settings.`,
+			)
+		})
 		device.Events.on(SonosEvents.CurrentTrackUri, refresh)
 		device.Events.on(SonosEvents.CurrentTrackMetadata, (track: Track | string) => {
-			if (typeof track === 'string') {
-				this.tracks.delete(device.Uuid)
-			} else {
-				this.tracks.set(device.Uuid, track)
-			}
+			this.state.setTrack(device.Uuid, typeof track === 'string' ? undefined : track)
 			refresh()
 		})
 	}

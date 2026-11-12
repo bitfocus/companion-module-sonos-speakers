@@ -7,20 +7,142 @@ export interface PlayModeState {
 	repeat: RepeatState
 }
 
-/** Work out the shuffle and repeat state from the Sonos play mode of a device */
-export function getPlayModeState(device: SonosDevice): PlayModeState | undefined {
-	const mode: string | undefined = device.CurrentPlayMode
-	if (!mode) return undefined
+/** The subset of the library's track metadata used by this module */
+export interface Track {
+	Title?: string
+	Artist?: string
+	Album?: string
+	AlbumArtUri?: string
+}
 
-	const shuffle = mode.startsWith('SHUFFLE')
-	let repeat: RepeatState = 'off'
-	if (mode === 'REPEAT_ALL' || mode === 'SHUFFLE') repeat = 'all'
-	if (mode === 'REPEAT_ONE' || mode === 'SHUFFLE_REPEAT_ONE') repeat = 'one'
-	return { shuffle, repeat }
+/** State read directly from a speaker, used when it has not been delivered by an event (yet) */
+interface PolledDeviceState {
+	volume?: number
+	muted?: boolean
+	fixedVolume?: boolean
+	transportState?: string
+	playMode?: string
+	trackUri?: string
+}
+
+/**
+ * The state of the speakers.
+ * Values pushed by speaker events are preferred, and values read by polling fill the gaps.
+ * Events can fail to arrive (firewalls, multiple network interfaces), so polling keeps the module working then.
+ */
+export class DeviceStateStore {
+	private readonly polled = new Map<string, PolledDeviceState>()
+	private readonly tracks = new Map<string, Track>()
+
+	public clear(): void {
+		this.polled.clear()
+		this.tracks.clear()
+	}
+
+	public setTrack(uuid: string, track: Track | undefined): void {
+		if (track) this.tracks.set(uuid, track)
+		else this.tracks.delete(uuid)
+	}
+
+	public track(device: SonosDevice): Track | undefined {
+		return this.tracks.get(device.Uuid)
+	}
+
+	/** Store newly polled state, returns true when it differs from what was known before */
+	public setPolled(uuid: string, state: PolledDeviceState): boolean {
+		const changed = JSON.stringify(this.polled.get(uuid)) !== JSON.stringify(state)
+		this.polled.set(uuid, state)
+		return changed
+	}
+
+	public volume(device: SonosDevice): number | undefined {
+		const polled = this.polled.get(device.Uuid)
+		// Speakers with a fixed volume (Connect, Port) always output at full volume
+		if (polled?.fixedVolume) return 100
+		return device.Volume ?? polled?.volume
+	}
+
+	public isFixedVolume(device: SonosDevice): boolean {
+		return this.polled.get(device.Uuid)?.fixedVolume ?? false
+	}
+
+	public muted(device: SonosDevice): boolean | undefined {
+		return device.Muted ?? this.polled.get(device.Uuid)?.muted
+	}
+
+	/** The transport state of the group the device is in, eg PLAYING */
+	public transportState(device: SonosDevice): string | undefined {
+		const state: string | undefined = device.Coordinator.CurrentTransportState
+		return state ?? this.polled.get(device.Coordinator.Uuid)?.transportState
+	}
+
+	public trackUri(device: SonosDevice): string | undefined {
+		return device.Coordinator.CurrentTrackUri ?? this.polled.get(device.Coordinator.Uuid)?.trackUri
+	}
+
+	/** Shuffle and repeat state, from the play mode of the group the device is in */
+	public playMode(device: SonosDevice): PlayModeState | undefined {
+		const mode: string | undefined =
+			device.Coordinator.CurrentPlayMode ?? this.polled.get(device.Coordinator.Uuid)?.playMode
+		if (!mode) return undefined
+
+		const shuffle = mode.startsWith('SHUFFLE')
+		let repeat: RepeatState = 'off'
+		if (mode === 'REPEAT_ALL' || mode === 'SHUFFLE') repeat = 'all'
+		if (mode === 'REPEAT_ONE' || mode === 'SHUFFLE_REPEAT_ONE') repeat = 'one'
+		return { shuffle, repeat }
+	}
 }
 
 /** All the speakers which are in the same group as the device (including the device itself) */
 export function getGroupMembers(manager: SonosManager, device: SonosDevice): SonosDevice[] {
 	const coordinatorUuid = device.Coordinator.Uuid
 	return manager.Devices.filter((d) => d.Coordinator.Uuid === coordinatorUuid)
+}
+
+function isTrack(value: unknown): value is Track {
+	return typeof value === 'object' && value !== null
+}
+
+/** Read the state of every speaker directly. Returns true when something changed since the last poll. */
+export async function pollDevices(manager: SonosManager, state: DeviceStateStore): Promise<boolean> {
+	let changed = false
+
+	await Promise.all(
+		manager.Devices.map(async (device) => {
+			const transport = device.Coordinator.AVTransportService
+			const rendering = device.RenderingControlService
+			const isCoordinator = device.IsCoordinator
+
+			const [info, settings, position, volume, mute, fixed] = await Promise.allSettled([
+				isCoordinator ? transport.GetTransportInfo() : undefined,
+				isCoordinator ? transport.GetTransportSettings() : undefined,
+				isCoordinator ? transport.GetPositionInfo() : undefined,
+				rendering.GetVolume({ InstanceID: 0, Channel: 'Master' }),
+				rendering.GetMute({ InstanceID: 0, Channel: 'Master' }),
+				rendering.GetOutputFixed(),
+			])
+			const value = <T>(r: PromiseSettledResult<T>): T | undefined => (r.status === 'fulfilled' ? r.value : undefined)
+
+			const positionInfo = value(position)
+			const next: PolledDeviceState = {
+				volume: value(volume)?.CurrentVolume,
+				muted: value(mute)?.CurrentMute,
+				fixedVolume: value(fixed)?.CurrentFixed,
+				transportState: value(info)?.CurrentTransportState,
+				playMode: value(settings)?.PlayMode,
+				trackUri: positionInfo?.TrackURI,
+			}
+			if (state.setPolled(device.Uuid, next)) changed = true
+
+			if (isCoordinator && positionInfo) {
+				const meta: unknown = positionInfo.TrackMetaData
+				const before = JSON.stringify(state.track(device))
+				state.setTrack(device.Uuid, isTrack(meta) ? meta : undefined)
+				if (before !== JSON.stringify(state.track(device))) changed = true
+			}
+		}),
+	)
+
+	return changed
 }

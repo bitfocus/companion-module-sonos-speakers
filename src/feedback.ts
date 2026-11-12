@@ -1,5 +1,5 @@
 import type { SonosDevice } from '@svrooij/sonos'
-import { getGroupMembers, getPlayModeState } from './device-state.js'
+import { getGroupMembers } from './device-state.js'
 import type { SonosContext } from './sonos-context.js'
 import { DevicePicker, VolumePicker } from './choices.js'
 import {
@@ -64,7 +64,7 @@ export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinition
 	feedbacks[FeedbackId.Playing] = {
 		name: 'Device playing',
 		type: 'boolean',
-		description: 'If the device is playing, change colors of the bank',
+		description: 'True if the device is playing',
 		options: [DevicePicker(devices)],
 		defaultStyle: {
 			color: combineRgb(0, 0, 0),
@@ -73,15 +73,15 @@ export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinition
 		callback: (event) => {
 			const device = getDevice(event)
 			return (
-				String(device?.CurrentTransportState) === TransportState.Playing ||
-				String(device?.CurrentTransportState) === TransportState.Transitioning
+				String(device && ctx.state.transportState(device)) === TransportState.Playing ||
+				String(device && ctx.state.transportState(device)) === TransportState.Transitioning
 			)
 		},
 	}
 	feedbacks[FeedbackId.Paused] = {
 		name: 'Device paused',
 		type: 'boolean',
-		description: 'If the device is paused, change colors of the bank',
+		description: 'True if the device is paused',
 		options: [DevicePicker(devices)],
 		defaultStyle: {
 			color: combineRgb(0, 0, 0),
@@ -89,13 +89,13 @@ export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinition
 		},
 		callback: (event) => {
 			const device = getDevice(event)
-			return String(device?.CurrentTransportState) === TransportState.Paused
+			return String(device && ctx.state.transportState(device)) === TransportState.Paused
 		},
 	}
 	feedbacks[FeedbackId.Stopped] = {
 		name: 'Device stopped',
 		type: 'boolean',
-		description: 'If the device is stopped, change colors of the bank',
+		description: 'True if the device is stopped',
 		options: [DevicePicker(devices)],
 		defaultStyle: {
 			color: combineRgb(255, 255, 255),
@@ -103,13 +103,13 @@ export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinition
 		},
 		callback: (event) => {
 			const device = getDevice(event)
-			return String(device?.CurrentTransportState) === TransportState.Stopped
+			return String(device && ctx.state.transportState(device)) === TransportState.Stopped
 		},
 	}
 	feedbacks[FeedbackId.Mute] = {
 		name: 'Device muted',
 		type: 'boolean',
-		description: 'If the device is muted, change style of the bank',
+		description: 'True if the device is muted',
 		options: [DevicePicker(devices)],
 		defaultStyle: {
 			color: combineRgb(255, 255, 255),
@@ -117,13 +117,13 @@ export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinition
 		},
 		callback: (event) => {
 			const device = getDevice(event)
-			return !!device?.Muted
+			return !!device && !!ctx.state.muted(device)
 		},
 	}
 	feedbacks[FeedbackId.Volume] = {
 		name: 'Device volume',
 		type: 'boolean',
-		description: 'If the device is volume matches, change colors of the bank',
+		description: 'True if the device volume matches',
 		options: [DevicePicker(devices), VolumeComparitorPicker(), VolumePicker()],
 		defaultStyle: {
 			color: combineRgb(255, 255, 255),
@@ -131,16 +131,15 @@ export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinition
 		},
 		callback: (event) => {
 			const device = getDevice(event)
-			return (
-				device?.Volume !== undefined && compareVolume(event.options.volume, event.options.comparitor, device?.Volume)
-			)
+			const volume = device && ctx.state.volume(device)
+			return volume !== undefined && compareVolume(event.options.volume, event.options.comparitor, volume)
 		},
 	}
 
 	feedbacks[FeedbackId.Repeat] = {
 		name: 'Device repeat mode',
 		type: 'boolean',
-		description: 'If the device has the chosen repeat mode, change style of the button',
+		description: 'True if the device has the chosen repeat mode',
 		options: [
 			DevicePicker(devices),
 			{
@@ -161,13 +160,13 @@ export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinition
 		},
 		callback: (event) => {
 			const device = getDevice(event)
-			return !!device && getPlayModeState(device)?.repeat === event.options.mode
+			return !!device && ctx.state.playMode(device)?.repeat === event.options.mode
 		},
 	}
 	feedbacks[FeedbackId.Shuffle] = {
 		name: 'Device shuffle',
 		type: 'boolean',
-		description: 'If shuffle is on, change style of the button',
+		description: 'True if shuffle is on',
 		options: [DevicePicker(devices)],
 		defaultStyle: {
 			color: combineRgb(0, 0, 0),
@@ -175,13 +174,13 @@ export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinition
 		},
 		callback: (event) => {
 			const device = getDevice(event)
-			return !!device && !!getPlayModeState(device)?.shuffle
+			return !!device && !!ctx.state.playMode(device)?.shuffle
 		},
 	}
 	feedbacks[FeedbackId.Grouped] = {
 		name: 'Device grouped',
 		type: 'boolean',
-		description: 'If the device is grouped with other speakers, change style of the button',
+		description: 'True if the device is grouped with other speakers',
 		options: [DevicePicker(devices)],
 		defaultStyle: {
 			color: combineRgb(0, 0, 0),
@@ -195,7 +194,7 @@ export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinition
 	feedbacks[FeedbackId.Coordinator] = {
 		name: 'Device is group coordinator',
 		type: 'boolean',
-		description: 'If the device is the coordinator of its group (the one which is playing), change style of the button',
+		description: 'True if the device is the coordinator of its group (the one which is playing)',
 		options: [DevicePicker(devices)],
 		defaultStyle: {
 			color: combineRgb(0, 0, 0),
