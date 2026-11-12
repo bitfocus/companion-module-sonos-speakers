@@ -8,7 +8,12 @@
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-sonos-speakers.git",
 	"bugs": "https://github.com/bitfocus/companion-module-sonos-speakers/issues",
-	"maintainers": [],
+	"maintainers": [
+		{
+			"name": "David Fox",
+			"email": "david@got-fox.com"
+		}
+	],
 	"legacyIds": [],
 	"runtime": {
 		"type": "node26",
@@ -17,11 +22,6 @@
 		"entrypoint": "../dist/main.js"
 	},
 	"manufacturer": "Sonos",
-	"products": [
-		"Speakers"
-	],
-	"keywords": [
-		"Audio",
-		"Media"
-	]
+	"products": ["Speakers"],
+	"keywords": ["Audio", "Media"]
 }
