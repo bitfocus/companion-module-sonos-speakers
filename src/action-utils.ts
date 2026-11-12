@@ -72,3 +72,14 @@ export function parseDuration(value: string): number {
 	if (parts.length !== 3 || parts.some((p) => isNaN(p))) return 0
 	return parts[0] * 3600 + parts[1] * 60 + parts[2]
 }
+
+/**
+ * Empty the queue of the group the device is in.
+ * Sonos reports an error when clearing a queue which is already empty, so only clear when there is something to remove.
+ */
+export async function clearQueue(device: SonosDevice): Promise<void> {
+	const coordinator = device.Coordinator
+	const queue = await coordinator.GetQueue().catch(() => undefined)
+	if (queue && queue.TotalMatches === 0) return
+	await coordinator.AVTransportService.RemoveAllTracksFromQueue()
+}

@@ -3,6 +3,7 @@ import type { CompanionActionDefinitions } from '@companion-module/base'
 import { ActionId } from './action-ids.js'
 import {
 	OnOffTogglePicker,
+	clearQueue,
 	failed,
 	formatDuration,
 	getDevice,
@@ -170,9 +171,9 @@ export function GetPlaybackActions(ctx: SonosContext): CompanionActionDefinition
 			name: 'Clear queue',
 			options: [DevicePicker(devices)],
 			callback: async (action) => {
-				await getDevice(ctx, action)
-					?.Coordinator.AVTransportService.RemoveAllTracksFromQueue()
-					.catch(failed('Clear queue'))
+				const device = getDevice(ctx, action)
+				if (!device) return
+				await clearQueue(device).catch(failed('Clear queue'))
 			},
 		},
 		[ActionId.RemoveCurrentFromQueue]: {

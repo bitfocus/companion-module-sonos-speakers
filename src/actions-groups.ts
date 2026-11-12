@@ -53,12 +53,12 @@ export function GetGroupActions(ctx: SonosContext): CompanionActionDefinitions<M
 			callback: async (action) => {
 				const target = getDevice(ctx, action)
 				if (!target) return
-				const results = await Promise.allSettled(
-					devices.filter((d) => d.Uuid !== target.Uuid).map(async (d) => joinGroupOf(d, target)),
-				)
-				const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-				if (failures.length > 0 && failures.length === results.length) {
-					failed('Party mode')(failures[0].reason)
+				const others = devices.filter((d) => d.Uuid !== target.Uuid)
+				const results = await Promise.allSettled(others.map(async (d) => joinGroupOf(d, target)))
+				const failedRooms = others.filter((_, i) => results[i].status === 'rejected').map((d) => d.Name)
+				if (failedRooms.length > 0) {
+					const firstError = results.find((r): r is PromiseRejectedResult => r.status === 'rejected')?.reason
+					failed(`Party mode (could not add ${failedRooms.join(', ')})`)(firstError)
 				}
 			},
 		},

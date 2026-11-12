@@ -1,7 +1,7 @@
 import { MetaDataHelper, type SonosDevice } from '@svrooij/sonos'
 import type { CompanionActionDefinitions, CompanionInputFieldDropdown } from '@companion-module/base'
 import { ActionId } from './action-ids.js'
-import { failed, formatDuration, getDevice, getOptInt, getOptString } from './action-utils.js'
+import { clearQueue, failed, formatDuration, getDevice, getOptInt, getOptString } from './action-utils.js'
 import { DevicePicker } from './choices.js'
 import type { LibTrack, SonosContext } from './sonos-context.js'
 import type { ModuleTypes } from './types.js'
@@ -42,7 +42,7 @@ async function playLibraryItem(device: SonosDevice, item: LibTrack, what: string
 			.SetAVTransportURI({ InstanceID: 0, CurrentURI: uri, CurrentURIMetaData: metadata })
 			.catch(failed(what))
 	} else {
-		await transport.RemoveAllTracksFromQueue().catch(failed(what))
+		await clearQueue(device).catch(failed(what))
 		await transport
 			.AddURIToQueue({
 				InstanceID: 0,
