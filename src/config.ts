@@ -2,12 +2,38 @@ import { networkInterfaces } from 'node:os'
 import { Regex, type SomeCompanionConfigField } from '@companion-module/base'
 
 export type DeviceConfig = {
+	/** Speaker picked from the devices Companion discovered with Bonjour, as `host:port`. Empty means manual */
+	bonjour_host?: string | null
+	/** IP address entered manually */
 	host?: string
 	pollInterval?: number
 	listenerHost?: string
 }
 
 export const DEFAULT_POLL_INTERVAL = 5
+
+/** The default port of the Sonos control API */
+const DEFAULT_SONOS_PORT = 1400
+
+/**
+ * Work out which speaker to connect to: the one picked from the discovered devices,
+ * or else the manually entered IP address.
+ */
+export function ResolveSpeaker(config: DeviceConfig): { host: string; port: number } | undefined {
+	const picked = config.bonjour_host?.trim()
+	if (picked) {
+		// Split on the last colon, so IPv6 addresses keep working
+		const split = picked.lastIndexOf(':')
+		const port = split > 0 ? Number(picked.slice(split + 1)) : NaN
+		if (split > 0 && Number.isInteger(port) && port > 0) {
+			return { host: picked.slice(0, split).replace(/^\[|\]$/g, ''), port }
+		}
+		return { host: picked, port: DEFAULT_SONOS_PORT }
+	}
+
+	const manual = config.host?.trim()
+	return manual ? { host: manual, port: DEFAULT_SONOS_PORT } : undefined
+}
 
 /** Value of the event listener dropdown which means: work out the address automatically */
 export const LISTENER_AUTO = 'auto'
@@ -28,11 +54,18 @@ export function GetListenerChoices(): { id: string; label: string }[] {
 export function GetConfigFields(): SomeCompanionConfigField[] {
 	return [
 		{
+			type: 'bonjour-device',
+			id: 'bonjour_host',
+			label: 'Sonos speaker (any speaker in the system)',
+			width: 6,
+		},
+		{
 			type: 'textinput',
 			id: 'host',
 			label: 'Discovery IP (any sonos device in the system)',
 			width: 6,
 			regex: Regex.IP,
+			isVisibleExpression: '!$(options:bonjour_host)',
 		},
 		{
 			type: 'number',
