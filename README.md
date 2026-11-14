@@ -12,7 +12,7 @@ Package the module with `yarn package`. Requires Node 26.
 
 ## Changes
 
-### Unreleased
+### v2.0.1
 
 - Pick the speaker from the Sonos speakers Companion discovers on the network (Bonjour), instead of having to enter an IP address. Manual IP entry is still available
 
