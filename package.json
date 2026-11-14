@@ -1,6 +1,6 @@
 {
 	"name": "sonos-speakers",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"main": "dist/main.js",
 	"type": "module",
 	"scripts": {
@@ -29,7 +29,7 @@
 		"@svrooij/sonos": "^2.7.0"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^3.2.0",
+		"@companion-module/tools": "^3.2.1",
 		"@types/node": "^26",
 		"eslint": "^10",
 		"prettier": "^3",

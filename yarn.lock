@@ -27,18 +27,18 @@
   dependencies:
     colord "^2.9.3"
 
-"@companion-module/tools@^3.2.0":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@companion-module/tools/-/tools-3.2.0.tgz#151f272ad5b3e466f1e1831bad4d0529c42096e4"
-  integrity sha512-5Mn9XcLtrANZQ39xhf1Pi1gwuueWMhV3yyHbWV/MZf4sA2tnGYsmiKzZs6stynvCRRzZA8dxmA0ZMEy24Fb7zg==
+"@companion-module/tools@^3.2.1":
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/@companion-module/tools/-/tools-3.2.1.tgz#7269009b2fe7013043adc1795d5f1e26f547dc3c"
+  integrity sha512-9xQcGxdMabjT8+p3FCL+zvnk2b/AI7YBUr9qNCLASP+ihVftD11Ym7aaP/9O6c4Ln9wKJbBfmAtU3Ov9xldZMg==
   dependencies:
     "@eslint/js" "^10.0.1"
     esbuild "^0.28.2"
     eslint-config-prettier "^10.1.8"
-    eslint-plugin-n "^18.4.0"
-    eslint-plugin-prettier "^5.5.6"
+    eslint-plugin-n "^18.5.0"
+    eslint-plugin-prettier "^5.5.7"
     find-up "^8.0.0"
-    semver "^7.8.5"
+    semver "^7.8.6"
     spdx-expression-parse "^5.0.0"
     tar "^7.5.22"
     zx "^8.8.5"
@@ -591,7 +591,7 @@ eslint-plugin-es-x@^7.8.0:
     "@eslint-community/regexpp" "^4.11.0"
     eslint-compat-utils "^0.5.1"
 
-eslint-plugin-n@^18.4.0:
+eslint-plugin-n@^18.5.0:
   version "18.5.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-n/-/eslint-plugin-n-18.5.0.tgz#f1c8a888ad3c573ab0d155939336eb529932f7fb"
   integrity sha512-M7uF6MTN/An+AXqvyIbXq7npJIZOkd5eKo8iMMvWrcDVNyZVdA6TF2lw01aKQfCEidRfpnR78GhAjZorlXNHiw==
@@ -606,7 +606,7 @@ eslint-plugin-n@^18.4.0:
     js-yaml "^5.4.1"
     semver "^7.6.3"
 
-eslint-plugin-prettier@^5.5.6:
+eslint-plugin-prettier@^5.5.7:
   version "5.5.7"
   resolved "https://registry.yarnpkg.com/eslint-plugin-prettier/-/eslint-plugin-prettier-5.5.7.tgz#ebef3acc2d664333b1356b717780198abc635398"
   integrity sha512-WjHyn3GrFd+ZR0rzsLiM4zJZ35PZMOE0SUIxzGmnWNG0126yNfJKJzObmmkYDwHJfGlkz3PSlzyG9ez/LJntwg==
@@ -1079,7 +1079,7 @@ semver@^7.5.4, semver@^7.6.3:
   resolved "https://registry.yarnpkg.com/semver/-/semver-7.8.5.tgz#39b646037dd50c14fb451e7e4cac58ed8b863f69"
   integrity sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==
 
-semver@^7.7.3, semver@^7.8.5:
+semver@^7.7.3, semver@^7.8.6:
   version "7.8.6"
   resolved "https://registry.yarnpkg.com/semver/-/semver-7.8.6.tgz#67c0cda133a3ceb6f70b803e67625bf969000424"
   integrity sha512-9lpSSU4Mly3mrtruwLs1eLK6+gzbzqeBFwRNjIjE+9LuDpWdYctrQlQ3ej1Ilgi7gknpsTRnPoLP8DpCHqHIJw==
