@@ -23,5 +23,11 @@
 	},
 	"manufacturer": "Sonos",
 	"products": ["Speakers"],
-	"keywords": ["Audio", "Media"]
+	"keywords": ["Audio", "Media"],
+	"bonjourQueries": {
+		"bonjour_host": {
+			"type": "sonos",
+			"protocol": "tcp"
+		}
+	}
 }
