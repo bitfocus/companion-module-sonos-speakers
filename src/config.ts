@@ -18,17 +18,19 @@ const DEFAULT_SONOS_PORT = 1400
 /**
  * Work out which speaker to connect to: the one picked from the discovered devices,
  * or else the manually entered IP address.
+ *
+ * The port Bonjour reports (1443) is the speaker's HTTPS port, while the control API
+ * used by this module is plain HTTP on 1400, so the discovered port is ignored.
  */
 export function ResolveSpeaker(config: DeviceConfig): { host: string; port: number } | undefined {
 	const picked = config.bonjour_host?.trim()
 	if (picked) {
-		// Split on the last colon, so IPv6 addresses keep working
+		// Drop the port, splitting on the last colon so IPv6 addresses keep working
 		const split = picked.lastIndexOf(':')
-		const port = split > 0 ? Number(picked.slice(split + 1)) : NaN
-		if (split > 0 && Number.isInteger(port) && port > 0) {
-			return { host: picked.slice(0, split).replace(/^\[|\]$/g, ''), port }
-		}
-		return { host: picked, port: DEFAULT_SONOS_PORT }
+		const hasPort =
+			split > 0 && /^\d+$/.test(picked.slice(split + 1)) && !(picked.match(/:/g)!.length > 1 && !picked.includes(']'))
+		const host = hasPort ? picked.slice(0, split) : picked
+		return { host: host.replace(/^\[|\]$/g, ''), port: DEFAULT_SONOS_PORT }
 	}
 
 	const manual = config.host?.trim()
