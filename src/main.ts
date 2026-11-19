@@ -7,6 +7,7 @@ import {
 	GetConfigFields,
 	GetListenerChoices,
 	LISTENER_AUTO,
+	ResolveSpeaker,
 } from './config.js'
 import { DeviceStateStore, pollDevices, type Track } from './device-state.js'
 import { FeedbackId, GetFeedbacksList } from './feedback.js'
@@ -68,13 +69,14 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 
 		this.applyListenerHost(config.listenerHost)
 
-		if (!config.host) {
-			this.updateStatus(InstanceStatus.BadConfig, 'No discovery IP configured')
+		const speaker = ResolveSpeaker(config)
+		if (!speaker) {
+			this.updateStatus(InstanceStatus.BadConfig, 'No speaker selected and no discovery IP configured')
 			return
 		}
 
 		try {
-			await manager.InitializeFromDevice(config.host)
+			await manager.InitializeFromDevice(speaker.host, speaker.port)
 		} catch (e) {
 			if (generation !== this.generation) return
 
