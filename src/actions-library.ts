@@ -127,6 +127,7 @@ export function GetLibraryActions(ctx: SonosContext): CompanionActionDefinitions
 					label: 'Mode',
 					id: 'mode',
 					default: 'set',
+					disableAutoExpression: true,
 					choices: [
 						{ id: 'set', label: 'Set' },
 						{ id: 'cancel', label: 'Cancel' },
