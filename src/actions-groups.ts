@@ -1,10 +1,9 @@
 import type { SonosDevice } from '@svrooij/sonos'
-import type { CompanionActionDefinitions } from '@companion-module/base'
 import { ActionId } from './action-ids.js'
 import { OnOffTogglePicker, failed, getDevice, getOptInt, resolveOnOffToggle } from './action-utils.js'
 import { DevicePicker, VolumePicker } from './choices.js'
 import type { SonosContext } from './sonos-context.js'
-import type { ModuleTypes } from './types.js'
+import type { ActionDefs } from './types.js'
 
 /** Make `device` join the group which `target` is in */
 async function joinGroupOf(device: SonosDevice, target: SonosDevice): Promise<void> {
@@ -17,7 +16,11 @@ async function joinGroupOf(device: SonosDevice, target: SonosDevice): Promise<vo
 	})
 }
 
-export function GetGroupActions(ctx: SonosContext): CompanionActionDefinitions<ModuleTypes['actions']> {
+export function GetGroupActions(
+	ctx: SonosContext,
+): ActionDefs<
+	'join_group' | 'ungroup' | 'party_mode' | 'transfer_playback' | 'group_volume' | 'group_volume_delta' | 'group_mute'
+> {
 	const devices = ctx.manager.Devices
 
 	return {

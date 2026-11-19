@@ -1,10 +1,10 @@
 import { MetaDataHelper, type SonosDevice } from '@svrooij/sonos'
-import type { CompanionActionDefinitions, CompanionInputFieldDropdown } from '@companion-module/base'
+import type { CompanionInputFieldDropdown } from '@companion-module/base'
 import { ActionId } from './action-ids.js'
 import { clearQueue, failed, formatDuration, getDevice, getOptInt, getOptString } from './action-utils.js'
 import { DevicePicker } from './choices.js'
 import type { LibTrack, SonosContext } from './sonos-context.js'
-import type { ModuleTypes } from './types.js'
+import type { ActionDefs } from './types.js'
 
 const STREAM_URI_PREFIXES = [
 	'x-sonosapi-stream:',
@@ -66,7 +66,7 @@ function findByName(items: LibTrack[], name: string): LibTrack | undefined {
 	)
 }
 
-function ItemPicker(label: string, id: string, items: LibTrack[]): CompanionInputFieldDropdown {
+function ItemPicker<TId extends string>(label: string, id: TId, items: LibTrack[]): CompanionInputFieldDropdown<TId> {
 	const choices = items.filter((i) => i.Title).map((i) => ({ id: i.Title as string, label: i.Title as string }))
 	return {
 		type: 'dropdown',
@@ -79,7 +79,11 @@ function ItemPicker(label: string, id: string, items: LibTrack[]): CompanionInpu
 	}
 }
 
-export function GetLibraryActions(ctx: SonosContext): CompanionActionDefinitions<ModuleTypes['actions']> {
+export function GetLibraryActions(
+	ctx: SonosContext,
+): ActionDefs<
+	'play_favourite' | 'play_radio_station' | 'refresh_lists' | 'sleep_timer' | 'alarm_enabled' | 'snooze_alarm'
+> {
 	const devices = ctx.manager.Devices
 	const roomName = (uuid: string): string => devices.find((d) => d.Uuid === uuid)?.Name ?? 'Unknown room'
 

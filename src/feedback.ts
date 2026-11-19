@@ -5,11 +5,10 @@ import { DevicePicker, VolumePicker } from './choices.js'
 import {
 	combineRgb,
 	type CompanionFeedbackBooleanEvent,
-	type CompanionFeedbackDefinitions,
 	type CompanionInputFieldDropdown,
 	type JsonValue,
 } from '@companion-module/base'
-import type { ModuleTypes } from './types.js'
+import type { AllFeedbackDefs } from './types.js'
 
 // Values of the library's TransportState enum, which is not exported from the package root
 const TransportState = {
@@ -19,17 +18,19 @@ const TransportState = {
 	Stopped: 'STOPPED',
 } as const
 
-export enum FeedbackId {
-	Playing = 'playing',
-	Paused = 'paused',
-	Stopped = 'stopped',
-	Volume = 'volume',
-	Mute = 'mute',
-	Repeat = 'repeat',
-	Shuffle = 'shuffle',
-	Grouped = 'grouped',
-	Coordinator = 'coordinator',
-}
+export const FeedbackId = {
+	Playing: 'playing',
+	Paused: 'paused',
+	Stopped: 'stopped',
+	Volume: 'volume',
+	Mute: 'mute',
+	Repeat: 'repeat',
+	Shuffle: 'shuffle',
+	Grouped: 'grouped',
+	Coordinator: 'coordinator',
+} as const
+
+export type FeedbackId = (typeof FeedbackId)[keyof typeof FeedbackId]
 
 export enum VolumeComparitor {
 	Equal = 'eq',
@@ -37,7 +38,7 @@ export enum VolumeComparitor {
 	GreaterThan = 'gt',
 }
 
-function VolumeComparitorPicker(): CompanionInputFieldDropdown {
+function VolumeComparitorPicker(): CompanionInputFieldDropdown<'comparitor'> {
 	const options = [
 		{ id: VolumeComparitor.Equal, label: 'Equal' },
 		{ id: VolumeComparitor.GreaterThan, label: 'Greater than' },
@@ -52,8 +53,9 @@ function VolumeComparitorPicker(): CompanionInputFieldDropdown {
 	}
 }
 
-export function GetFeedbacksList(ctx: SonosContext): CompanionFeedbackDefinitions<ModuleTypes['feedbacks']> {
-	const feedbacks: CompanionFeedbackDefinitions<ModuleTypes['feedbacks']> = {}
+export function GetFeedbacksList(ctx: SonosContext): AllFeedbackDefs {
+	// Filled in below
+	const feedbacks = {} as AllFeedbackDefs
 
 	const manager = ctx.manager
 	const devices = manager.Devices

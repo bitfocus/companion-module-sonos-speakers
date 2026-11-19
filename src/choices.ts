@@ -1,7 +1,7 @@
 import type { CompanionInputFieldDropdown, CompanionInputFieldNumber } from '@companion-module/base'
 import type { SonosDevice } from '@svrooij/sonos'
 
-export const MutedPicker: CompanionInputFieldDropdown = {
+export const MutedPicker: CompanionInputFieldDropdown<'muted'> = {
 	type: 'dropdown',
 	label: 'Muted',
 	id: 'muted',
@@ -13,7 +13,11 @@ export const MutedPicker: CompanionInputFieldDropdown = {
 	],
 }
 
-export function DevicePicker(devices: SonosDevice[], id = 'device', label = 'Device'): CompanionInputFieldDropdown {
+export function DevicePicker<TId extends string = 'device'>(
+	devices: SonosDevice[],
+	id: TId = 'device' as TId,
+	label = 'Device',
+): CompanionInputFieldDropdown<TId> {
 	const choices = devices.map((d) => ({
 		id: d.Uuid,
 		label: d.Name,
@@ -28,7 +32,7 @@ export function DevicePicker(devices: SonosDevice[], id = 'device', label = 'Dev
 	}
 }
 
-export function VolumePicker(): CompanionInputFieldNumber {
+export function VolumePicker(): CompanionInputFieldNumber<'volume'> {
 	return {
 		type: 'number',
 		label: 'Volume',

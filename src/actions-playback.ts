@@ -1,5 +1,4 @@
 import type { SonosDevice } from '@svrooij/sonos'
-import type { CompanionActionDefinitions } from '@companion-module/base'
 import { ActionId } from './action-ids.js'
 import {
 	OnOffTogglePicker,
@@ -14,7 +13,7 @@ import {
 } from './action-utils.js'
 import { DevicePicker } from './choices.js'
 import type { SonosContext } from './sonos-context.js'
-import type { ModuleTypes } from './types.js'
+import type { ActionDefs } from './types.js'
 
 type RepeatValue = Parameters<SonosDevice['SetRepeat']>[0]
 // The library's Repeat enum is not exported, so use its string values
@@ -22,7 +21,22 @@ const REPEAT_OFF = 'Off' as RepeatValue
 const REPEAT_ALL = 'RepeatAll' as RepeatValue
 const REPEAT_ONE = 'RepeatOne' as RepeatValue
 
-export function GetPlaybackActions(ctx: SonosContext): CompanionActionDefinitions<ModuleTypes['actions']> {
+export function GetPlaybackActions(
+	ctx: SonosContext,
+): ActionDefs<
+	| 'stop'
+	| 'seek'
+	| 'seek_relative'
+	| 'repeat'
+	| 'shuffle'
+	| 'crossfade'
+	| 'switch_to_queue'
+	| 'play_queue_track'
+	| 'clear_queue'
+	| 'remove_current_from_queue'
+	| 'line_in'
+	| 'switch_to_tv'
+> {
 	const devices = ctx.manager.Devices
 
 	return {
