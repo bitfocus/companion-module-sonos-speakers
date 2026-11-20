@@ -1,12 +1,13 @@
 import type { SonosDevice } from '@svrooij/sonos'
-import type { CompanionActionDefinitions, CompanionInputFieldNumber } from '@companion-module/base'
+import type { CompanionInputFieldNumber } from '@companion-module/base'
 import { ActionId } from './action-ids.js'
 import { OnOffTogglePicker, failed, getDevice, getOptInt, resolveOnOffToggle } from './action-utils.js'
 import { DevicePicker } from './choices.js'
 import type { SonosContext } from './sonos-context.js'
-import type { ModuleTypes } from './types.js'
+import type { ActionDefs, AllActionDefs } from './types.js'
 
-type ActionDef = NonNullable<CompanionActionDefinitions<ModuleTypes['actions']>[string]>
+type SwitchDef = NonNullable<AllActionDefs['sub_enabled']>
+type LevelDef = NonNullable<AllActionDefs['sub_gain']>
 
 async function setEq(device: SonosDevice, eqType: string, value: number): Promise<boolean> {
 	return device.RenderingControlService.SetEQ({ InstanceID: 0, EQType: eqType, DesiredValue: value })
@@ -16,15 +17,32 @@ async function getEq(device: SonosDevice, eqType: string): Promise<number> {
 	return (await device.RenderingControlService.GetEQ({ InstanceID: 0, EQType: eqType })).CurrentValue
 }
 
-function LevelPicker(label: string, min: number, max: number, id = 'level'): CompanionInputFieldNumber {
+function LevelPicker(label: string, min: number, max: number): CompanionInputFieldNumber<'level'> {
+	const id = 'level'
 	return { type: 'number', label, id, default: 0, min, max, asInteger: true }
 }
 
-export function GetEqActions(ctx: SonosContext): CompanionActionDefinitions<ModuleTypes['actions']> {
+export function GetEqActions(
+	ctx: SonosContext,
+): ActionDefs<
+	| 'bass'
+	| 'treble'
+	| 'loudness'
+	| 'balance'
+	| 'night_mode'
+	| 'speech_enhancement'
+	| 'sub_enabled'
+	| 'sub_gain'
+	| 'surround_enabled'
+	| 'surround_volume_tv'
+	| 'surround_volume_music'
+	| 'surround_full_volume'
+	| 'ramp_volume'
+> {
 	const devices = ctx.manager.Devices
 
 	/** An on/off/toggle action which is backed by a Sonos EQ setting (1 = on, 0 = off) */
-	const eqSwitch = (name: string, eqType: string, description?: string): ActionDef => ({
+	const eqSwitch = (name: string, eqType: string, description?: string): SwitchDef => ({
 		name,
 		description,
 		options: [DevicePicker(devices), OnOffTogglePicker()],
@@ -37,7 +55,7 @@ export function GetEqActions(ctx: SonosContext): CompanionActionDefinitions<Modu
 	})
 
 	/** A level action which is backed by a Sonos EQ setting */
-	const eqLevel = (name: string, eqType: string, min: number, max: number, description?: string): ActionDef => ({
+	const eqLevel = (name: string, eqType: string, min: number, max: number, description?: string): LevelDef => ({
 		name,
 		description,
 		options: [DevicePicker(devices), LevelPicker('Level', min, max)],

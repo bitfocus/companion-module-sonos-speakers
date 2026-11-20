@@ -1,6 +1,6 @@
 ## SONOS
 
-Control Sonos speakers on your network. Enter the IP address of any one Sonos speaker, and the module discovers the rest.
+Control Sonos speakers on your network. Pick any one Sonos speaker from the list of discovered speakers, and the module discovers the rest. If your speakers are not listed (discovery does not work across VLANs or VPNs), choose Manual and enter the IP address of any one speaker.
 
 **Actions**
 
