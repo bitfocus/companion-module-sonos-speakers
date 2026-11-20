@@ -215,6 +215,12 @@ export default class ControllerInstance extends InstanceBase<ModuleTypes> {
 		} catch {
 			// Ignore
 		}
+		try {
+			// Remove the per-speaker listeners, so the library unsubscribes and clears its renewal timers
+			for (const device of this.manager.Devices) device.CancelEvents()
+		} catch {
+			// No devices loaded yet
+		}
 	}
 
 	private subscribeEvents(device: SonosDevice): void {

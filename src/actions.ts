@@ -6,14 +6,10 @@ import { GetLibraryActions } from './actions-library.js'
 import { GetPlaybackActions } from './actions-playback.js'
 import type { SonosContext } from './sonos-context.js'
 import { DevicePicker, MutedPicker, VolumePicker } from './choices.js'
-import type {
-	CompanionActionDefinitions,
-	CompanionActionEvent,
-	CompanionInputFieldNumber,
-} from '@companion-module/base'
-import type { ModuleTypes } from './types.js'
+import type { CompanionActionEvent, CompanionInputFieldNumber } from '@companion-module/base'
+import type { ActionDefs, AllActionDefs } from './types.js'
 
-function VolumeDeltaPicker(): CompanionInputFieldNumber {
+function VolumeDeltaPicker(): CompanionInputFieldNumber<'delta'> {
 	return {
 		type: 'number',
 		label: 'Delta',
@@ -26,7 +22,7 @@ function VolumeDeltaPicker(): CompanionInputFieldNumber {
 
 export { ActionId, PlayPauseToggle }
 
-export function GetActionsList(ctx: SonosContext): CompanionActionDefinitions<ModuleTypes['actions']> {
+export function GetActionsList(ctx: SonosContext): AllActionDefs {
 	const manager = ctx.manager
 	const devices = manager.Devices
 
@@ -46,7 +42,10 @@ export function GetActionsList(ctx: SonosContext): CompanionActionDefinitions<Mo
 		return typeof val === 'string' ? val : ''
 	}
 
-	const actions: CompanionActionDefinitions<ModuleTypes['actions']> = {}
+	// Filled in below
+	const actions = {} as ActionDefs<
+		'play_pause' | 'next_track' | 'previous_track' | 'mute' | 'volume' | 'volume_delta' | 'load_stream_uri'
+	>
 
 	actions[ActionId.PlayPause] = {
 		name: 'Play/pause',
@@ -68,12 +67,12 @@ export function GetActionsList(ctx: SonosContext): CompanionActionDefinitions<Mo
 			const device = getDevice(action)
 			if (device) {
 				switch (action.options.mode) {
-					case PlayPauseToggle.Play:
+					case 'play':
 						await device.Play().catch((e) => {
 							throw new Error(`Sonos: Play failed: ${e}`)
 						})
 						break
-					case PlayPauseToggle.Pause:
+					case 'pause':
 						await device.Pause().catch((e) => {
 							throw new Error(`Sonos: Pause failed: ${e}`)
 						})

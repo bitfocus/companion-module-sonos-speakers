@@ -1,18 +1,18 @@
 import type { SonosManager } from '@svrooij/sonos'
-import type { CompanionVariableDefinitions, CompanionVariableValues, InstanceBase } from '@companion-module/base'
+import type { CompanionVariableDefinitions, InstanceBase } from '@companion-module/base'
 import { getGroupMembers, type DeviceStateStore } from './device-state.js'
-import type { ModuleTypes } from './types.js'
+import type { ModuleTypes, VariablesSchema } from './types.js'
 
 export function updateVariables(
 	instance: InstanceBase<ModuleTypes>,
 	manager: SonosManager,
 	state: DeviceStateStore,
 ): void {
-	const newValues: CompanionVariableValues = {}
+	const newValues: Partial<VariablesSchema> = {}
 
 	manager.Devices.forEach((dev) => {
 		const track = state.track(dev)
-		const prefix = `device.${dev.Uuid}`
+		const prefix: `device.${string}` = `device.${dev.Uuid}`
 
 		newValues[`${prefix}.name`] = dev.Name
 		newValues[`${prefix}.group`] = dev.GroupName || ''
@@ -46,10 +46,10 @@ export function InitVariables(
 	manager: SonosManager,
 	state: DeviceStateStore,
 ): void {
-	const variables: CompanionVariableDefinitions = {}
+	const variables: CompanionVariableDefinitions<VariablesSchema> = {}
 
 	manager.Devices.forEach((dev) => {
-		const prefix = `device.${dev.Uuid}`
+		const prefix: `device.${string}` = `device.${dev.Uuid}`
 		variables[`${prefix}.name`] = { name: `Device name (${dev.Name})` }
 		variables[`${prefix}.group`] = { name: `Device group (${dev.Name})` }
 		variables[`${prefix}.volume`] = { name: `Device volume, number 0-100 (${dev.Name})` }

@@ -1,5 +1,5 @@
 import type { SonosDevice } from '@svrooij/sonos'
-import type { CompanionActionEvent, CompanionInputFieldDropdown } from '@companion-module/base'
+import type { CompanionActionEvent, CompanionOptionValues, CompanionInputFieldDropdown } from '@companion-module/base'
 import type { SonosContext } from './sonos-context.js'
 
 export type OnOffToggle = 'on' | 'off' | 'toggle'
@@ -11,11 +11,18 @@ export function failed(what: string): (e: unknown) => never {
 	}
 }
 
-export function getDevice(ctx: SonosContext, action: CompanionActionEvent, key = 'device'): SonosDevice | undefined {
+export function getDevice<O extends { device: string }>(
+	ctx: SonosContext,
+	action: CompanionActionEvent<O>,
+	key: keyof O & string = 'device',
+): SonosDevice | undefined {
 	return ctx.manager.Devices.find((d) => d.Uuid === action.options[key])
 }
 
-export function getOptInt(action: CompanionActionEvent, key: string): number {
+export function getOptInt<O extends CompanionOptionValues>(
+	action: CompanionActionEvent<O>,
+	key: keyof O & string,
+): number {
 	const val = Number(action.options[key])
 	if (isNaN(val)) {
 		throw new Error(`Invalid option '${key}'`)
@@ -23,16 +30,22 @@ export function getOptInt(action: CompanionActionEvent, key: string): number {
 	return Math.round(val)
 }
 
-export function getOptString(action: CompanionActionEvent, key: string): string {
+export function getOptString<O extends CompanionOptionValues>(
+	action: CompanionActionEvent<O>,
+	key: keyof O & string,
+): string {
 	const val = action.options[key]
 	return typeof val === 'string' ? val : ''
 }
 
-export function getOptBool(action: CompanionActionEvent, key: string): boolean {
+export function getOptBool<O extends CompanionOptionValues>(
+	action: CompanionActionEvent<O>,
+	key: keyof O & string,
+): boolean {
 	return action.options[key] === true
 }
 
-export function OnOffTogglePicker(label = 'Mode'): CompanionInputFieldDropdown {
+export function OnOffTogglePicker(label = 'Mode'): CompanionInputFieldDropdown<'mode'> {
 	return {
 		type: 'dropdown',
 		label,

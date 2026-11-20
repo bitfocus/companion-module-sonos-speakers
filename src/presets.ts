@@ -6,23 +6,23 @@ import {
 	type CompanionPresetDefinitions,
 	type CompanionPresetSection,
 	type CompanionSimplePresetDefinition,
-	type CompanionOptionValues,
 } from '@companion-module/base'
 import type { LibTrack, SonosContext } from './sonos-context.js'
-import type { ModuleTypes } from './types.js'
+import type { ActionsSchema, ModuleTypes } from './types.js'
 
 type Preset = CompanionSimplePresetDefinition<ModuleTypes>
 type PresetFeedback = Preset['feedbacks'][number]
+type PresetAction = Preset['steps'][number]['down'][number]
 
 const WHITE = combineRgb(255, 255, 255)
 const BLACK = combineRgb(0, 0, 0)
 
 /** Build a simple button which runs a single action when pressed */
-function button(
+function button<K extends ActionId>(
 	name: string,
 	text: string,
-	actionId: ActionId,
-	options: CompanionOptionValues,
+	actionId: K,
+	options: ActionsSchema[K]['options'],
 	feedbacks: PresetFeedback[] = [],
 ): Preset {
 	return {
@@ -30,7 +30,7 @@ function button(
 		type: 'simple',
 		style: { text, size: 'auto', color: WHITE, bgcolor: BLACK },
 		feedbacks,
-		steps: [{ down: [{ actionId, options }], up: [] }],
+		steps: [{ down: [{ actionId, options } as PresetAction], up: [] }],
 	}
 }
 
@@ -55,9 +55,11 @@ function activeStyle(): { bgcolor: number; color: number } {
 	return { bgcolor: combineRgb(0, 255, 0), color: BLACK }
 }
 
-function itemButton(item: LibTrack, device: SonosDevice, actionId: ActionId, optionId: string): Preset {
+function itemButton(item: LibTrack, device: SonosDevice, actionId: 'play_favourite' | 'play_radio_station'): Preset {
 	const title = item.Title ?? 'Unknown'
-	return button(`${title} on ${device.Name}`, title, actionId, { device: device.Uuid, [optionId]: title })
+	return actionId === 'play_favourite'
+		? button(`${title} on ${device.Name}`, title, actionId, { device: device.Uuid, favourite: title })
+		: button(`${title} on ${device.Name}`, title, actionId, { device: device.Uuid, station: title })
 }
 
 type Presets = [CompanionPresetSection<ModuleTypes>[], CompanionPresetDefinitions<ModuleTypes>]
@@ -201,7 +203,7 @@ export function GetPresetsList(ctx: SonosContext): Presets {
 		const favouriteIds: string[] = []
 		ctx.favourites.forEach((item, i) => {
 			const key = `favourite_${i}`
-			presets[key] = itemButton(item, firstDevice, ActionId.PlayFavourite, 'favourite')
+			presets[key] = itemButton(item, firstDevice, ActionId.PlayFavourite)
 			favouriteIds.push(key)
 		})
 		if (favouriteIds.length) {
@@ -216,7 +218,7 @@ export function GetPresetsList(ctx: SonosContext): Presets {
 		const stationIds: string[] = []
 		ctx.radioStations.forEach((item, i) => {
 			const key = `station_${i}`
-			presets[key] = itemButton(item, firstDevice, ActionId.PlayRadioStation, 'station')
+			presets[key] = itemButton(item, firstDevice, ActionId.PlayRadioStation)
 			stationIds.push(key)
 		})
 		if (stationIds.length) {
