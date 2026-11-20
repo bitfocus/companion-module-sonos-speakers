@@ -12,6 +12,12 @@ Package the module with `yarn package`. Requires Node 26.
 
 ## Changes
 
+### v2.0.2
+
+- Cancel the per-speaker event subscriptions and their renewal timers when the connection settings are saved, so they no longer pile up
+- Sleep timer: hide the Minutes field when Mode is Cancel
+- Type all actions, feedbacks and variables from a module schema, and align the project files and tooling (Yarn 4, Husky, lint-staged, workflows) with the module template
+
 ### v2.0.1
 
 - Pick the speaker from the Sonos speakers Companion discovers on the network (Bonjour), instead of having to enter an IP address. Manual IP entry is still available
